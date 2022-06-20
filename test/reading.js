@@ -1,7 +1,5 @@
 const Counter = artifacts.require("Counter");
 
-
-
 contract("Counter", (accounts) => {
   it("balanceOf Address", async () => {
     const counterInstance = await Counter.deployed();
