@@ -1,0 +1,26 @@
+[
+    {
+        "method": "hmyv2_getBalanceByBlockNumber",
+        "test": "genesis_addr_initial_balance",
+        "pass": true,
+        "duration": "1.018609356s"
+    },
+    {
+        "method": "hmyv2_getBalanceByBlockNumber",
+        "test": "missing block",
+        "pass": true,
+        "duration": "205.564372ms"
+    },
+    {
+        "method": "hmy_getBalanceByBlockNumber",
+        "test": "addr_initial_balance",
+        "pass": true,
+        "duration": "204.520262ms"
+    },
+    {
+        "method": "hmy_getBalanceByBlockNumber",
+        "test": "missing block",
+        "pass": true,
+        "duration": "204.58378ms"
+    }
+]

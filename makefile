@@ -1,5 +1,7 @@
-setupGanache:
+start:
 	ganache-cli -f http://localhost:9500 --networkId 1666700000
+	truffle compile 
+	truffle migrate  --network localnet --reset
 
 installRequirements:
 	sudo npm install -g truffle
@@ -16,6 +18,9 @@ installRequirements:
 	git clone https://github.com/harmony-one/harmony-one-ganache-support.git
 	./harmony-one-ganache-support/scripts/build-docker.sh
 	rm -rf ./harmony-one-ganache-support
+	wget https://go.dev/dl/go1.18.3.linux-amd64.tar.gz
+	rm -rf /usr/local/go && tar -C /usr/local -xzf go1.18.3.linux-amd64.tar.gz
+	export PATH=$PATH:/usr/local/go/bin
 
 
 

@@ -10,6 +10,13 @@ You can install all requirements using `make installRequirements`
 
 If you want to do it manually 
 
+To run the tests you will need Go installed
+```bash
+wget https://go.dev/dl/go1.18.3.linux-amd64.tar.gz
+rm -rf /usr/local/go && tar -C /usr/local -xzf go1.18.3.linux-amd64.tar.gz
+export PATH=$PATH:/usr/local/go/bin
+```
+
 You will need Truffle installed
 ```bash
 sudo apt install nodejs npm # If you dont have nodejs and npm
@@ -39,6 +46,8 @@ rm -rf ./harmony-one-ganache-support # Clean up
 After installation, you will have a binary named `ganache`  
 you can use to start up a localnet on Ganache.  
 
+You can use `make start` to start this localnet
+
 ## Setup of Environments variables
 In the repository you can find a file named `example.env`, in it 
 there is placeholders `<YOUR_PRIVATE_KEY>` and `<YOUR_MNEMONIC_CODE>`.  
@@ -46,20 +55,35 @@ there is placeholders `<YOUR_PRIVATE_KEY>` and `<YOUR_MNEMONIC_CODE>`.
 Copy the file into `.env` and fill in the needed keys  
 
 
-```bash
-./ganache
-```
-
 GanacheHarmony has a bug where Transactions to fund the wallets in ganache hangs.
 But the Generis wallet has funds  
 `0xA5241513DA9F4463F1d4874b548dFBAC29D91f34`  
 
 The private key for this wallet is 
 `1f84c95ac16e6a50f08d44c7bde7aff8742212fda6e4321fde48bf83bef266dc`
-## Run tests against certain network
+
+
+## Running tests
+To run the tests you will use the std Go tooling.
+
+Make sure you have started the localnet or configure the network you want using the flags explained below.
 ```bash
-truffle test --network localnet
+make start
 ```
+
+```bash
+go test 
+```
+
+By default it will run with the genesis address on localnet. 
+If you want another Network or Address you can insert flags as following 
+
+```bash
+go test --address="your adr" --url="networkurl"
+```
+
+## Test results
+Test results are printed in a `results.json` file inside the rpctester folder.
 
 ## Compile
 ```bash
