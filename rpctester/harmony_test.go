@@ -12,8 +12,8 @@ import (
 
 func Test_AccountMethods(t *testing.T) {
 
-	t.Run("Account Methods", test_V2_getBalanceByBlockNumber)
-	t.Run("Account Methods", test_V1_getBalanceByBlockNumber)
+	t.Run("ReadAccounts_V2", test_V2_getBalanceByBlockNumber)
+	t.Run("ReadAccounts_V1", test_V1_getBalanceByBlockNumber)
 	// After all tests, Generate report
 
 	data, err := json.Marshal(testMetrics)
