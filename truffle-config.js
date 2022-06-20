@@ -6,10 +6,10 @@ const local_mnemonic = process.env.LOCAL_MNEMONIC;
 const local_private_key = process.env.LOCAL_PRIVATE_KEY;
 const local_url = process.env.LOCAL_0_URL;
 
-//Testnet
-const testnet_mnemonic = process.env.TESTNET_MNEMONIC;
-const testnet_private_key = process.env.TESTNET_PRIVATE_KEY;
-const testnet_url = process.env.TESTNET_0_URL;
+//Devnet
+const devnet_mnemonic = process.env.DEVNET_MNEMONIC;
+const devnet_private_key = process.env.DEVNET_PRIVATE_KEY;
+const devnet_url = process.env.DEVNET_0_URL;
 
 //Mainnet
 const mainnet_mnemonic = process.env.MAINNET_MNEMONIC;
@@ -22,7 +22,7 @@ gasPrice = process.env.GAS_PRICE;
 
 module.exports = {
   networks: {
-    local: {
+    localnet: {
       network_id: "2", // Any network (default: none)
       provider: () => {
         const truffleProvider = new TruffleProvider(
@@ -36,16 +36,16 @@ module.exports = {
         return truffleProvider;
       },
     },
-    testnet: {
+    devnet: {
       network_id: "2", // Any network (default: none)
       provider: () => {
         const truffleProvider = new TruffleProvider(
-          testnet_url,
-          { memonic: testnet_mnemonic },
+          devnet_url,
+          { memonic: devnet_mnemonic },
           { shardID: 0, chainId: 2 },
           { gasLimit: gasLimit, gasPrice: gasPrice }
         );
-        const newAcc = truffleProvider.addByPrivateKey(testnet_private_key);
+        const newAcc = truffleProvider.addByPrivateKey(devnet_private_key);
         truffleProvider.setSigner(newAcc);
         return truffleProvider;
       },

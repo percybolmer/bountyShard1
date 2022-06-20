@@ -45,13 +45,17 @@ there is placeholders `<YOUR_PRIVATE_KEY>` and `<YOUR_MNEMONIC_CODE>`.
 
 Copy the file into `.env` and fill in the needed keys  
 
-When using Ganache, I recommend starting it with the -m flag  
-to always get the same private keys etc so its easier for you to use  
 
 ```bash
 ./ganache
 ```
 
+GanacheHarmony has a bug where Transactions to fund the wallets in ganache hangs.
+But the Generis wallet has funds  
+`0xA5241513DA9F4463F1d4874b548dFBAC29D91f34`  
+
+The private key for this wallet is 
+`1f84c95ac16e6a50f08d44c7bde7aff8742212fda6e4321fde48bf83bef266dc`
 ## Run tests against certain network
 ```bash
 truffle test --network localnet
@@ -60,5 +64,12 @@ truffle test --network localnet
 ## Compile
 ```bash
 truffle compile 
-truffle migrate  --network local --reset
+truffle migrate  --network localnet --reset
+```
+
+## Connecting ganach cli to networks
+```bash
+ganache-cli -f http://localhost:9500 --networkId 1666700000
+ganache-cli -f https://api.s0.b.hmny.io --networkId 1666700000
+ganache-cli -f https://api.s1.t.hmny.io --networkId 1666600000
 ```
