@@ -64,6 +64,11 @@ The private key for this wallet is
 
 
 ## Running tests
+
+Right now there is two possiblities, using the RPCtester library in Go
+or using the Truffle test.
+
+
 To run the tests you will use the std Go tooling.
 
 Make sure you have started the localnet or configure the network you want using the flags explained below.
@@ -85,6 +90,31 @@ go test --address="your adr" --url="networkurl"
 ## Test results
 Test results are printed in a `results.json` file inside the rpctester folder.
 
+Truffle tests are printed as stdout
+```bash
+Compiling your contracts...
+===========================
+> Everything is up to date, there is nothing to compile.
+
+
+  Contract: account_methods_v2
+    - hmyv2_getBalance: 1 ms
+    ✔ getBalance_v2 no Address Param
+    - hmyv2_getBalance: 1 ms
+    ✔ getBalance_v2
+    - hmyv2_getBalance: 1 ms
+    ✔ getBalanceByBlock_v2
+
+  Contract: account_methods_v1
+    ✔ getBalance_v1 no Address Param
+    ✔ getBalance_v1 no block
+    ✔ getBalance_v1 with Block 1
+
+
+  6 passing (4s)
+
+
+```
 ## Compile
 ```bash
 truffle compile 
