@@ -2,7 +2,8 @@
 This repository is started to start solving  
 https://github.com/harmony-one/bounties/issues/117
 
-In this setup we will use Ganache Harmony and Truffle.
+In this setup we will use Ganache Harmony for hosting an localnet, and we use Go (geth) to compile the contracts and 
+run the tests.
 
 
 ## Requirements and dependencies
@@ -15,16 +16,6 @@ To run the tests you will need Go installed
 wget https://go.dev/dl/go1.18.3.linux-amd64.tar.gz
 rm -rf /usr/local/go && tar -C /usr/local -xzf go1.18.3.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
-```
-
-You will need Truffle installed
-```bash
-sudo apt install nodejs npm # If you dont have nodejs and npm
-npm install -g truffle
-npm install --save @harmony-js/core
-npm install --save @harmony-js/utils
-npm install --save tslib
-npm install --save dotenv
 ```
 
 You will also need a local Harmony node to test against when developing the tests before running them in Production RPC  
@@ -64,11 +55,6 @@ The private key for this wallet is
 
 
 ## Running tests
-
-Right now there is two possiblities, using the RPCtester library in Go
-or using the Truffle test.
-
-
 To run the tests you will use the std Go tooling.
 
 Make sure you have started the localnet or configure the network you want using the flags explained below.
@@ -90,36 +76,7 @@ go test --address="your adr" --url="networkurl"
 ## Test results
 Test results are printed in a `results.json` file inside the rpctester folder.
 
-Truffle tests are printed as stdout
-```bash
-Compiling your contracts...
-===========================
-> Everything is up to date, there is nothing to compile.
 
-
-  Contract: account_methods_v2
-    - hmyv2_getBalance: 1 ms
-    ✔ getBalance_v2 no Address Param
-    - hmyv2_getBalance: 1 ms
-    ✔ getBalance_v2
-    - hmyv2_getBalance: 1 ms
-    ✔ getBalanceByBlock_v2
-
-  Contract: account_methods_v1
-    ✔ getBalance_v1 no Address Param
-    ✔ getBalance_v1 no block
-    ✔ getBalance_v1 with Block 1
-
-
-  6 passing (4s)
-
-
-```
-## Compile
-```bash
-truffle compile 
-truffle migrate  --network localnet --reset
-```
 
 ## Connecting ganach cli to networks
 ```bash

@@ -2,11 +2,9 @@ package rpctester
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"math/big"
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -31,14 +29,12 @@ func test_V2_getBalanceByBlockNumber(t *testing.T) {
 	type testcase struct {
 		name              string
 		br                BaseRequest
-		expectedBalance   string
 		expectedErrorCode int64
 	}
 
 	testCases := []testcase{
 		{
-			name:            "genesis_addr_initial_balance",
-			expectedBalance: InitialBalance(*url, "V2"),
+			name: "genesis_addr_initial_balance",
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
@@ -50,7 +46,6 @@ func test_V2_getBalanceByBlockNumber(t *testing.T) {
 			},
 		}, {
 			name:              "missing block",
-			expectedBalance:   "0",
 			expectedErrorCode: -32602,
 			br: BaseRequest{
 				ID:      "1",
@@ -117,19 +112,6 @@ func test_V2_getBalanceByBlockNumber(t *testing.T) {
 					t.Error(err)
 					return
 				}
-
-				if !strings.EqualFold(s.String(), tc.expectedBalance) {
-					errMsg := fmt.Sprintf("%s != %s ", s.String(), tc.expectedBalance)
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    errMsg,
-					})
-					t.Error(errMsg)
-					return
-				}
 			}
 			testMetrics = append(testMetrics, TestMetric{
 				Method:   tc.br.Method,
@@ -146,14 +128,12 @@ func test_V1_getBalanceByBlockNumber(t *testing.T) {
 	type testcase struct {
 		name              string
 		br                BaseRequest
-		expectedBalance   string
 		expectedErrorCode int64
 	}
 
 	testCases := []testcase{
 		{
-			name:            "addr_initial_balance",
-			expectedBalance: InitialBalance(*url, "V1"),
+			name: "getBalanceByBlock",
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
@@ -165,7 +145,6 @@ func test_V1_getBalanceByBlockNumber(t *testing.T) {
 			},
 		}, {
 			name:              "missing block",
-			expectedBalance:   "0",
 			expectedErrorCode: -32602,
 			br: BaseRequest{
 				ID:      "1",
@@ -233,18 +212,6 @@ func test_V1_getBalanceByBlockNumber(t *testing.T) {
 					return
 				}
 
-				if !strings.EqualFold(s, tc.expectedBalance) {
-					errMsg := fmt.Sprintf("%s != %s ", s, tc.expectedBalance)
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    errMsg,
-					})
-					t.Error(errMsg)
-					return
-				}
 			}
 			testMetrics = append(testMetrics, TestMetric{
 				Method:   tc.br.Method,
