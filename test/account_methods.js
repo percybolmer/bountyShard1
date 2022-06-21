@@ -44,7 +44,7 @@ contract("account_methods_v2", (accounts) => {
       id: new Date().getTime()
     });
     var end = Date.now();
-    mlog.log(`hmyv2_getBalance: ${end - start} ms`);
+    mlog.log(`hmyv2_getBalanceByBlockNumber: ${end - start} ms`);
     assert.equal(response.error, undefined, "Should have undefined error");
     assert.typeOf(response.result, 'number');
     //balance = (response.result).toFixed(20) / 1e18;
