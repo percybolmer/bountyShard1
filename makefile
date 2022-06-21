@@ -11,6 +11,7 @@ installRequirements:
 	sudo npm install --save dotenv
 	sudo npm install -g ganache-cli
 	sudo npm install -g web3
+	sudo npm install -g util.promisify
 	sudo npm install -g 'bn.js'
 	wget https://github.com/harmony-one/harmony-one-ganache-support/releases/download/ganache-harmony-one-2.6.0-beta.3/ganache-2.6.0-beta.3-linux-x86_64.AppImage
 	sudo chmod +x ganache-2.6.0-beta.3-linux-x86_64.AppImage

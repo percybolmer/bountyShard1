@@ -4,7 +4,9 @@
     "@harmony-js/utils": "^0.1.56",
     "bn.js": "^5.2.1",
     "dotenv": "^16.0.1",
+    "mocha-logger": "^1.0.8",
     "tslib": "^2.4.0",
+    "util.promisify": "^1.1.1",
     "web3": "^1.7.3"
   }
 }
