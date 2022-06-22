@@ -2,9 +2,9 @@ start:
 	ganache-cli -f http://localhost:9500 --networkId 1666700000
 	
 compileContracts:
-	solc --abi contracts/Counter.sol -o build
-	solc --bin contracts/Counter.sol -o build
-	abigen --abi=./build/Counter.abi --bin=./build/Counter.bin --pkg=counter --out=rpctester/contracts/counter/Counter.go
+	solc --abi contracts/DevToken.sol -o build --overwrite
+	solc --bin contracts/DevToken.sol -o build --overwrite
+	abigen --abi=./build/DevToken.abi --bin=./build/DevToken.bin --pkg=devtoken --out=rpctester/contracts/devtoken/DevToken.go
 	
 installRequirements:
 	sudo npm install -g ganache-cli

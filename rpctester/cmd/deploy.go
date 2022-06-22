@@ -7,7 +7,7 @@ import (
 	"log"
 	"math/big"
 	"os"
-	store "percybolmer/rpc-shard-testing/rpctester/contracts/counter"
+	"percybolmer/rpc-shard-testing/rpctester/contracts/devtoken"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -69,7 +69,7 @@ func deployContracts(cmd *cobra.Command, args []string) {
 	auth.GasLimit = uint64(3321900) // in units
 	auth.GasPrice = gasPrice
 
-	address, tx, instance, err := store.DeployCounter(auth, client)
+	address, tx, instance, err := devtoken.DeployDevtoken(auth, client, "DevToken", "DEVT", 18, big.NewInt(1000))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,16 +82,16 @@ func deployContracts(cmd *cobra.Command, args []string) {
 	time.Sleep(5 * time.Second)
 
 	// load contract example
-	instance, err = store.NewCounter(address, client)
+	instance, err = devtoken.NewDevtoken(address, client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	data, err := instance.GetCount(&bind.CallOpts{})
+	data, err := instance.Name(&bind.CallOpts{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("count is: ")
-	log.Print(data.String())
+	log.Println("name is: ")
+	log.Print(data)
 }
