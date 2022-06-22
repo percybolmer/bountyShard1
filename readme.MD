@@ -7,6 +7,14 @@ run the tests.
 
 
 ## Requirements and dependencies
+There are three major requirements
+
+* Ganache Harmony
+* Go
+* Geth 
+* Solc
+
+
 You can install all requirements using `make installRequirements`
 
 If you want to do it manually 
@@ -16,6 +24,15 @@ To run the tests you will need Go installed
 wget https://go.dev/dl/go1.18.3.linux-amd64.tar.gz
 rm -rf /usr/local/go && tar -C /usr/local -xzf go1.18.3.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
+```
+
+You also need Geth installed. You can find installation instructions on their website.
+
+```bash
+sudo add-apt-repository -y ppa:ethereum/ethereum
+sudo apt-get install ethereum
+sudo apt-get upgrade geth
+sudo apt-get install solc
 ```
 
 You will also need a local Harmony node to test against when developing the tests before running them in Production RPC  
@@ -40,8 +57,12 @@ you can use to start up a localnet on Ganache.
 You can use `make start` to start this localnet
 
 ## Setup of Environments variables
-In the repository you can find a file named `example.env`, in it 
-there is placeholders `<YOUR_PRIVATE_KEY>` and `<YOUR_MNEMONIC_CODE>`.  
+In the repository you can find a file named `rpctester/example.env`, in it 
+there is a few environment variables needed. 
+
+It is prefilled with the Localnet defaults for genesis account. 
+
+You can replace with whatever network and private key and mneonic you want,
 
 Copy the file into `.env` and fill in the needed keys  
 
@@ -53,6 +74,20 @@ But the Generis wallet has funds
 The private key for this wallet is 
 `1f84c95ac16e6a50f08d44c7bde7aff8742212fda6e4321fde48bf83bef266dc`
 
+If you want to use a mainnet, you can create a `.env-prod` file and insert the real values
+and private key. 
+
+Set the environment variable `RPCTESTER_ENVIRONMENT` = "production" to use the `.env-prod`
+
+## Compiling solidity contracts
+This requires Solc installed
+
+```bash
+solc --abi contracts/Counter.sol -o build
+solc --bin contracts/Counter.sol -o build
+abigen --abi=./build/Counter.abi --bin=./build/Counter.bin --pkg=counter --out=rpctester/contracts/counter/Counter.go
+
+```
 
 ## Running tests
 To run the tests you will use the std Go tooling.
@@ -66,12 +101,13 @@ make start
 go test 
 ```
 
-By default it will run with the genesis address on localnet. 
+By default it will look for a `.env` file in the rpctester folder
 If you want another Network or Address you can insert flags as following 
 
 ```bash
 go test --address="your adr" --url="networkurl"
 ```
+
 
 ## Test results
 Test results are printed in a `results.json` file inside the rpctester folder.

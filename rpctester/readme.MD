@@ -1,3 +1,12 @@
+# Deploy smart contracts
+To deploy needed smart contracts first use the Deploy command
+
+```bash
+go build -o rpctester
+./rpctester deploy
+```
+
+
 # Tests
 Run these tests using 
 
