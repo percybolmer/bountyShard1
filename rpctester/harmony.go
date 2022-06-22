@@ -15,13 +15,19 @@ import (
 )
 
 const (
-	METHOD_V1_getBalanceByBlockNumber = "hmy_getBalanceByBlockNumber"
-	METHOD_V2_getBalanceByBlockNumber = "hmyv2_getBalanceByBlockNumber"
-	METHOD_V1_getTransactionCount     = "hmy_getTransactionCount"
-	METHOD_V2_getTransactionCount     = "hmyv2_getTransactionCount"
-	METHOD_V1_getBalance              = "hmy_getBalance"
-	METHOD_V2_getBalance              = "hmyv2_getBalance"
-	METHOD_address                    = "address"
+	METHOD_V1_getBalanceByBlockNumber         = "hmy_getBalanceByBlockNumber"
+	METHOD_V2_getBalanceByBlockNumber         = "hmyv2_getBalanceByBlockNumber"
+	METHOD_V1_getTransactionCount             = "hmy_getTransactionCount"
+	METHOD_V2_getTransactionCount             = "hmyv2_getTransactionCount"
+	METHOD_V1_getBalance                      = "hmy_getBalance"
+	METHOD_V2_getBalance                      = "hmyv2_getBalance"
+	METHOD_address                            = "address"
+	METHOD_filter_getFilterLogs               = "hmy_getFilterLogs"
+	METHOD_filter_newFilter                   = "hmy_newFilter"
+	METHOD_filter_newPendingTranscationFilter = "hmy_newPendingTransactionFilter"
+	METHOD_filter_newBlockFilter              = "hmy_newBlockFilter"
+	METHOD_filter_getFilterChanges            = "hmy_getFilterChanges"
+	METHOD_filter_getLogs                     = "hmy_getLogs"
 )
 
 var (
@@ -44,11 +50,12 @@ type TestResults struct {
 }
 
 type TestMetric struct {
-	Method   string `json:"method"`
-	Test     string `json:"test"`
-	Pass     bool   `json:"pass"`
-	Duration string `json:"duration"`
-	Error    string `json:"error,omitempty"`
+	Method   string        `json:"method"`
+	Test     string        `json:"test"`
+	Pass     bool          `json:"pass"`
+	Duration string        `json:"duration"`
+	Error    string        `json:"error,omitempty"`
+	Params   []interface{} `json:"params,omitempty"`
 }
 
 // BaseRequest is the base structure of requests
@@ -81,17 +88,6 @@ type AddressResponse struct {
 	Method string `json:"method"`
 	// Not part of the default message
 	Duration string `json:"duration"`
-}
-
-type Transaction struct {
-	ID        string `json:"id"`
-	Timestamp string `json:"timestamp"`
-	From      string `json:"from"`
-	To        string `json:"to"`
-	Value     int64  `json:"value"`
-	Bytes     string `json:"bytes"`
-	Data      string `json:"data"`
-	Type      string `json:"type"`
 }
 
 type RPCError struct {
