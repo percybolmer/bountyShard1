@@ -1,4 +1,7 @@
 .env
-node_modules
+.env-prod
 ganache*
 build
+results.json
+internal.txt
+.vscode
