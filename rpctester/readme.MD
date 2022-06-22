@@ -39,3 +39,7 @@ It looks like the following
 ]
 
 ```
+
+## Known Issues
+Filter Logs are always empty no matter what
+Created filter sometimes does not exist, even after a 2 second delay
