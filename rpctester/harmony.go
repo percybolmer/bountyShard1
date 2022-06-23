@@ -10,35 +10,111 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"percybolmer/rpc-shard-testing/rpctester/contracts/devtoken"
+	"percybolmer/rpc-shard-testing/rpctester/crypto"
 	"strconv"
 	"time"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/joho/godotenv"
 )
 
 const (
-	METHOD_V1_getBalanceByBlockNumber         = "hmy_getBalanceByBlockNumber"
-	METHOD_V2_getBalanceByBlockNumber         = "hmyv2_getBalanceByBlockNumber"
-	METHOD_V1_getTransactionCount             = "hmy_getTransactionCount"
-	METHOD_V2_getTransactionCount             = "hmyv2_getTransactionCount"
-	METHOD_V1_getBalance                      = "hmy_getBalance"
-	METHOD_V2_getBalance                      = "hmyv2_getBalance"
-	METHOD_address                            = "address"
+	METHOD_V1_getBalanceByBlockNumber = "hmy_getBalanceByBlockNumber"
+	METHOD_V2_getBalanceByBlockNumber = "hmyv2_getBalanceByBlockNumber"
+	METHOD_V1_getTransactionCount     = "hmy_getTransactionCount"
+	METHOD_V2_getTransactionCount     = "hmyv2_getTransactionCount"
+	METHOD_V1_getBalance              = "hmy_getBalance"
+	METHOD_V2_getBalance              = "hmyv2_getBalance"
+	METHOD_address                    = "address"
+	/**
+	Filter related methods
+
+	*/
 	METHOD_filter_getFilterLogs               = "hmy_getFilterLogs"
 	METHOD_filter_newFilter                   = "hmy_newFilter"
-	METHOD_filter_newPendingTranscationFilter = "hmy_newPendingTransactionFilter"
+	METHOD_filter_newPendingtransactionFilter = "hmy_newPendingTransactionFilter"
 	METHOD_filter_newBlockFilter              = "hmy_newBlockFilter"
 	METHOD_filter_getFilterChanges            = "hmy_getFilterChanges"
 	METHOD_filter_getLogs                     = "hmy_getLogs"
+	/*
+		transactions related methods,
+		Get help with the staking transactions
+		Since they all fail,
+	*/
+	METHOD_transaction_V1_getStakingTransactionByBlockHashAndIndex   = "hmy_getStakingTransactionByBlockHashAndIndex"
+	METHOD_transaction_V2_getStakingTransactionByBlockHashAndIndex   = "hmyv2_getStakingTransactionByBlockHashAndIndex"
+	METHOD_transaction_V1_getStakingTransactionByBlockNumberAndIndex = "hmy_getStakingTransactionByBlockNumberAndIndex"
+	METHOD_transaction_V2_getStakingTransactionByBlockNumberAndIndex = "hmyv2_getStakingTransactionByBlockNumberAndIndex"
+	METHOD_transaction_V1_getStakingTransactionByHash                = "hmy_getStakingTransactionByHash"
+	METHOD_transaction_V2_getStakingTransactionByHash                = "hmyv2_getStakingTransactionByHash"
+	METHOD_transaction_V1_getCurrentTransactionErrorSink             = "hmy_getCurrentTransactionErrorSink"
+	METHOD_transaction_V2_getCurrentTransactionErrorSink             = "hmyv2_getCurrentTransactionErrorSink"
+	//
+	METHOD_transaction_V1_getPendingCrossLinks = "hmy_getPendingCrossLinks"
+	METHOD_transaction_V2_getPendingCrossLinks = "hmyv2_getPendingCrossLinks"
+	METHOD_transaction_V1_getPendingCXReceipts = "hmy_getPendingCXReceipts"
+	METHOD_transaction_V2_getPendingCXReceipts = "hmyv2_getPendingCXReceipts"
+	METHOD_transaction_V1_getCXReceiptByHash   = "hmy_getCXReceiptByHash"
+	METHOD_transaction_V2_getCXReceiptByHash   = "hmyv2_getCXReceiptByHash"
+	METHOD_transaction_V1_pendingTransactions  = "hmy_pendingTransactions"
+	METHOD_transaction_V2_pendingTransactions  = "hmyv2_pendingTransactions"
+	// TODO How do I format the RawStaking Transaction?
+	METHOD_transaction_sendRawStakingTransaction = "hmy_sendRawStakingTransaction"
+	METHOD_transaction_sendRawTransaction        = "hmy_sendRawTransaction"
+	// Different endpoints?
+	METHOD_transaction_V1_getTransactionHistory = "hmy_getTransactionsHistory"
+	METHOD_transaction_V2_getTransactionHistory = "hmyv2_getTransactionsHistory"
+	METHOD_transaction_V1_getTransactionReceipt = "hmy_getTransactionReceipt"
+	METHOD_transaction_V2_getTransactionReceipt = "hmyv2_getTransactionReceipt"
 )
 
 var (
-	httpClient  *http.Client
-	testMetrics []TestMetric
+	httpClient    *http.Client
+	testMetrics   []TestMetric
+	ethClient     *ethclient.Client
+	auth          *bind.TransactOpts
+	deployedToken *devtoken.Devtoken
+
+	address                     string
+	url                         string
+	smartContractDeploymentHash string
+	smartContractAddress        common.Address
 )
 
 func init() {
 	// Dont like global http Client, but in this case it might make somewhat sense since we only want to test
 	httpClient = &http.Client{Timeout: time.Duration(5) * time.Second}
 	testMetrics = []TestMetric{}
+
+	// Load .dotenv file
+	environment := os.Getenv("RPCTESTER_ENVIRONMENT")
+
+	if environment == "production" {
+		if err := godotenv.Load(".env-prod"); err != nil {
+			log.Fatal("Error loading .env-prod file")
+		}
+	} else {
+		if err := godotenv.Load(".env"); err != nil {
+			log.Fatal("Error loading .env file")
+		}
+	}
+
+	address = os.Getenv("ADDRESS")
+	url = os.Getenv("NET_URL")
+	smartContractAddr := os.Getenv("SMART_CONTRACT_ADDRESS")
+	smartContractDeploymentHash = os.Getenv("SMART_CONTRACT_DEPLOY_HASH")
+	// Create eth client
+	ethClient, auth = crypto.NewClient()
+	// Load the Smart Contract
+	smartContractAddress = common.HexToAddress(smartContractAddr)
+	instance, err := devtoken.NewDevtoken(smartContractAddress, ethClient)
+	if err != nil {
+		log.Fatal(err)
+	}
+	deployedToken = instance
 
 }
 

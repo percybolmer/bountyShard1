@@ -1,18 +1,15 @@
 package cmd
 
 import (
-	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"log"
 	"math/big"
-	"os"
 	"percybolmer/rpc-shard-testing/rpctester/contracts/devtoken"
+	"percybolmer/rpc-shard-testing/rpctester/crypto"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/spf13/cobra"
 )
 
@@ -28,46 +25,8 @@ var deployCMD = &cobra.Command{
 }
 
 func deployContracts(cmd *cobra.Command, args []string) {
-	client, err := ethclient.Dial(os.Getenv("NET_URL"))
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	privateKey, err := crypto.HexToECDSA(os.Getenv("PRIVATE_KEY"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
-	}
-
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	gasPrice, err := client.SuggestGasPrice(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	chainID, err := client.ChainID(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	log.Println("Using ChainID: ", chainID.String())
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-	if err != nil {
-		log.Fatal(err)
-	}
-	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)      // in wei
-	auth.GasLimit = uint64(3321900) // in units
-	auth.GasPrice = gasPrice
+	client, auth := crypto.NewClient()
 
 	address, tx, instance, err := devtoken.DeployDevtoken(auth, client, "DevToken", "DEVT", 18, big.NewInt(1000))
 	if err != nil {
@@ -75,7 +34,7 @@ func deployContracts(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Println("Contract addr: ", address.Hex())
-	fmt.Println(tx.Hash().Hex())
+	fmt.Println("Creation Hash: ", tx.Hash().Hex())
 
 	_ = instance
 
@@ -94,4 +53,5 @@ func deployContracts(cmd *cobra.Command, args []string) {
 
 	log.Println("name is: ")
 	log.Print(data)
+
 }

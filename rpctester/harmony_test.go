@@ -16,8 +16,37 @@ var (
 func Test_RPC_Sanity(t *testing.T) {
 	t.Run("AccountMethods", test_AccountMethods)
 	t.Run("FilterMethods", test_FilterMethods)
+	t.Run("TransactionMethods", test_TransactionMethods)
+	// Now generate report
 	GenerateReport()
 
+}
+
+// test_TransactionMethods is used to generate transactions and verify their data on the RPC
+func test_TransactionMethods(t *testing.T) {
+	t.Run("getStakingTransactionByBlockHashAndIndex", test_V1_getStakingTransactionByBlockHashAndIndex)
+	t.Run("getStakingTransactionByBlockHasAndIndex_V2", test_V2_getStakingTransactionByBlockHashAndIndex)
+	t.Run("getStakingTransactionByBlockNumberAndIndex", test_V1_getStakingTransactionByBlockNumberAndIndex)
+	t.Run("getStakingTransactionByBlockNumberAndIndex_V2", test_V2_getStakingTransactionByBlockNumberAndIndex)
+	t.Run("getStakingTransactionByHash_V1", test_V1_getStakingTransactionByHash)
+	t.Run("getStakingTransactionByHash_V2", test_V2_getStakingTransactionByHash)
+	t.Run("getCurrentTransactionErrorSink_V1", test_V1_getCurrentTransactionErrorSink)
+	t.Run("getCurrentTransactionErrorSink_V2", test_V2_getCurrentTransactionErrorSink)
+	t.Run("getPendingCrossLinks_V1", test_V1_getPendingCrossLinks)
+	t.Run("getPendingCrossLinks_V2", test_V2_getPendingCrossLinks)
+	t.Run("getPendingCXReceipts_V1", test_V1_getPendingCXReceipts)
+	t.Run("getPendingCXReceipts_V2", test_V2_getPendingCXReceipts)
+	t.Run("getCXReceiptByHash_V1", test_V1_getCXReceiptByHash)
+	t.Run("getCXReceiptByHash_V2", test_V2_getCXReceiptByHash)
+	t.Run("getPendingTransaction_V1", test_V1_pendingTransactions)
+	t.Run("getPendingTransaction_V2", test_V2_pendingTransactions)
+	// TODO confirm how to
+	//t.Run("sendRawStakingTransaction", test_sendRawStakingTransaction)
+	t.Run("sendRawTransaction", test_sendRawTransaction)
+	t.Run("getTransactionHistory_V1", test_V1_getTransactionHistory)
+	t.Run("getTransactionHistory_V2", test_V2_getTransactionHistory)
+	t.Run("getTransactionReceipt_V1", test_V1_getTransactionReceipt)
+	t.Run("getTransactionReceipt_V2", test_V2_getTransactionReceipt)
 }
 
 // test_AccountsMethods calls all Account RPC Methods and verifies that the data returned is correct
@@ -32,6 +61,7 @@ func test_AccountMethods(t *testing.T) {
 	//t.Run("address", test_address)
 }
 
+// test_FilterMethods is used to call Filter RPC methods and validate their return data
 func test_FilterMethods(t *testing.T) {
 	t.Run("newFilter", test_newFilter)
 	// Add some delay between newFilter and getFilterLogs so it has the time to actually create
@@ -343,7 +373,7 @@ func test_NewPendingTransactionFilter(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_newPendingTranscationFilter,
+				Method:  METHOD_filter_newPendingtransactionFilter,
 				Params:  []interface{}{},
 			},
 		},
