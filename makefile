@@ -1,3 +1,5 @@
+
+
 start:
 	ganache-cli -f http://localhost:9500 --networkId 1666700000
 	
@@ -22,7 +24,15 @@ installRequirements:
 	sudo apt-get upgrade -y geth 
 	sudo apt-get install solc
 	cd rpctester && go get -d github.com/ethereum/go-ethereum/...
+	sudo apt install libgmp-dev  libssl-dev  make gcc g++
 
+installHarmony:
+	mkdir -p $(shell go env GOPATH)/src/github.com/harmony-one
+	cd $(shell go env GOPATH)/src/github.com/harmony-one && \
+	git clone https://github.com/harmony-one/mcl.git && \
+	git clone https://github.com/harmony-one/bls.git && \
+	git clone https://github.com/harmony-one/harmony.git && \
+	cd harmony && go mod tidy && make
 
 
 	

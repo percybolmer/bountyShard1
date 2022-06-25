@@ -33,6 +33,7 @@ sudo add-apt-repository -y ppa:ethereum/ethereum
 sudo apt-get install ethereum
 sudo apt-get upgrade geth
 sudo apt-get install solc
+sudo apt install libgmp-dev  libssl-dev  make gcc g++
 ```
 
 You will also need a local Harmony node to test against when developing the tests before running them in Production RPC  
@@ -56,6 +57,24 @@ you can use to start up a localnet on Ganache.
 
 You can use `make start` to start this localnet
 
+The first time you will need Harmony Core installed, perform following, or use `make installHarmony` followed by exports
+
+```bash
+mkdir -p $(go env GOPATH)/src/github.com/harmony-one
+cd $(go env GOPATH)/src/github.com/harmony-one
+git clone https://github.com/harmony-one/mcl.git
+git clone https://github.com/harmony-one/bls.git
+git clone https://github.com/harmony-one/harmony.git
+cd harmony
+go mod tidy
+make
+export CGO_CFLAGS="-I$GOPATH/src/github.com/harmony-one/bls/include -I$GOPATH/src/github.com/harmony-one/mcl/include -I/usr/local/opt/openssl/include"
+export CGO_LDFLAGS="-L$GOPATH/src/github.com/harmony-one/bls/lib -L/usr/local/opt/openssl/lib"
+export LD_LIBRARY_PATH=$GOPATH/src/github.com/harmony-one/bls/lib:$GOPATH/src/github.com/harmony-one/mcl/lib:/usr/local/opt/openssl/lib
+export LIBRARY_PATH=$LD_LIBRARY_PATH
+export DYLD_FALLBACK_LIBRARY_PATH=$LD_LIBRARY_PATH
+```
+
 ## Setup of Environments variables
 In the repository you can find a file named `rpctester/example.env`, in it 
 there is a few environment variables needed. 
@@ -78,6 +97,7 @@ If you want to use a mainnet, you can create a `.env-prod` file and insert the r
 and private key. 
 
 Set the environment variable `RPCTESTER_ENVIRONMENT` = "production" to use the `.env-prod`
+Set it to = `dev` to use `.env-dev`
 
 ## Compiling solidity contracts
 This requires Solc installed

@@ -10,6 +10,9 @@ go build -o rpctester
 # Tests
 Run these tests using 
 
+Make sure you take the address from the deployed smart contract into the `.env` file  
+in the `SMART_CONTRACT_ADDRESS` variabel
+
 ```
 go test -v
 ```
@@ -43,3 +46,14 @@ It looks like the following
 ## Known Issues
 Filter Logs are always empty no matter what
 Created filter sometimes does not exist, even after a 2 second delay
+
+Some Methods does not exist
+hmyv2_getPendingCrossLinks
+
+TransactionHistory is always empty on Shard1
+
+# Questions to harmony
+How to perform a SendRawStakingTransaction
+
+Diffrent endpoitns for getTransactionHistory in docs, but not true
+

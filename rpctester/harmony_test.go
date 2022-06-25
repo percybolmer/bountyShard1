@@ -11,12 +11,67 @@ import (
 var (
 	// createdFilterID will be filled by the createFilter Test
 	createdFilterID = ""
+
+	ts *testSuite
 )
 
+func init() {
+	ts = &testSuite{}
+}
 func Test_RPC_Sanity(t *testing.T) {
 	t.Run("AccountMethods", test_AccountMethods)
 	t.Run("FilterMethods", test_FilterMethods)
+	t.Run("TransactionMethods", test_TransactionMethods)
+	// Now generate report
 	GenerateReport()
+
+}
+
+// test_TransactionMethods is used to generate transactions and verify their data on the RPC
+func test_TransactionMethods(t *testing.T) {
+	// Begin by sending Transaction so we can get transaction hashes to use
+	t.Run("sendRawTransaction", ts.test_sendRawTransaction)
+	t.Run("getStakingTransactionByBlockHashAndIndex", test_V1_getStakingTransactionByBlockHashAndIndex)
+	t.Run("getStakingTransactionByBlockHasAndIndex_V2", test_V2_getStakingTransactionByBlockHashAndIndex)
+	t.Run("getStakingTransactionByBlockNumberAndIndex", test_V1_getStakingTransactionByBlockNumberAndIndex)
+	t.Run("getStakingTransactionByBlockNumberAndIndex_V2", test_V2_getStakingTransactionByBlockNumberAndIndex)
+	t.Run("getStakingTransactionByHash_V1", test_V1_getStakingTransactionByHash)
+	t.Run("getStakingTransactionByHash_V2", test_V2_getStakingTransactionByHash)
+	t.Run("getCurrentTransactionErrorSink_V1", test_V1_getCurrentTransactionErrorSink)
+	t.Run("getCurrentTransactionErrorSink_V2", test_V2_getCurrentTransactionErrorSink)
+	t.Run("getPendingCrossLinks_V1", test_V1_getPendingCrossLinks)
+	t.Run("getPendingCrossLinks_V2", test_V2_getPendingCrossLinks)
+	t.Run("getPendingCXReceipts_V1", test_V1_getPendingCXReceipts)
+	t.Run("getPendingCXReceipts_V2", test_V2_getPendingCXReceipts)
+	t.Run("getCXReceiptByHash_V1", test_V1_getCXReceiptByHash)
+	t.Run("getCXReceiptByHash_V2", test_V2_getCXReceiptByHash)
+	t.Run("getPendingTransaction_V1", test_V1_pendingTransactions)
+	t.Run("getPendingTransaction_V2", test_V2_pendingTransactions)
+	// TODO confirm how to
+	//t.Run("sendRawStakingTransaction", test_sendRawStakingTransaction)
+	t.Log("Giving the network some time to congest transactions sent")
+	time.Sleep(10 * time.Second)
+	t.Run("getTransactionHistory_V1", ts.test_V1_getTransactionHistory)
+	t.Run("getTransactionHistory_V2", ts.test_V2_getTransactionHistory)
+	t.Run("getTransactionReceipt_V1", ts.test_V1_getTransactionReceipt)
+	t.Run("getTransactionReceipt_V2", ts.test_V2_getTransactionReceipt)
+	t.Run("getBlockTransactionCountByHash_V1", ts.test_V1_getBlockTransactionCountByHash)
+	t.Run("getBlockTransactionCountByHash_V2", ts.test_V2_getBlockTransactionCountByHash)
+	t.Run("getBlockTransactionCountByNumber_V1", ts.test_V1_getBlockTransactionCountByNumber)
+	t.Run("getBlockTransactionCountByNumber_V2", ts.test_V2_getBlockTransactionCountByNumber)
+	t.Run("getTransactionByHash_V1", ts.test_V1_getTransactionByHash)
+	t.Run("getTransactionByHash_V1", ts.test_V1_getTransactionByHash)
+	t.Run("getTransactionByBlockNumberAndIndex_V1", ts.test_V1_getTransactionByBlockNumberAndIndex)
+	t.Run("getTransactionByBlockNumberAndIndex_V2", ts.test_V2_getTransactionByBlockNumberAndIndex)
+	t.Run("getTransactionByBlockHashAndIndex_V1", ts.test_V1_getTransactionByBlockHashAndIndex)
+	t.Run("getTransactionByBlockHashAndIndex_V2", ts.test_V2_getTransactionByBlockHashAndIndex)
+	t.Run("getBlockByNumber_V1", ts.test_V1_getBlockByNumber)
+	t.Run("getBlockByNumber_V2", ts.test_V2_getBlockByNumber)
+	t.Run("getBlockByHash_V1", ts.test_V1_getBlockByHash)
+	t.Run("getBlockByHash_V2", ts.test_V2_getBlockByHash)
+	t.Run("getBlocks_V1", ts.test_V1_getBlocks)
+	t.Run("getBlocks_V2", ts.test_V2_getBlocks)
+	t.Run("tx", ts.test_tx)
 
 }
 
@@ -32,6 +87,7 @@ func test_AccountMethods(t *testing.T) {
 	//t.Run("address", test_address)
 }
 
+// test_FilterMethods is used to call Filter RPC methods and validate their return data
 func test_FilterMethods(t *testing.T) {
 	t.Run("newFilter", test_newFilter)
 	// Add some delay between newFilter and getFilterLogs so it has the time to actually create
@@ -343,7 +399,7 @@ func test_NewPendingTransactionFilter(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_newPendingTranscationFilter,
+				Method:  METHOD_filter_newPendingtransactionFilter,
 				Params:  []interface{}{},
 			},
 		},
