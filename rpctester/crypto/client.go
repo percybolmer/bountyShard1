@@ -79,3 +79,8 @@ func GetAddress() common.Address {
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	return fromAddress
 }
+
+// GetShardID retruns the configured shardID to use
+func GetShardID() (int, error) {
+	return strconv.Atoi(os.Getenv("SHARD_ID"))
+}

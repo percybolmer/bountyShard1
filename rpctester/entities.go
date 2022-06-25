@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"math/big"
 	"time"
 
@@ -129,6 +130,7 @@ type TransactionReceipt_V1 struct {
 	TransactionHash   string           `json:"transactionHash"`
 	TransactionIndex  string           `json:"transactionIndex"`
 }
+
 type TransactionReceipt_V2 struct {
 	BlockHash         string           `json:"blockHash"`
 	BlockNumber       int64            `json:"blockNumber"`
@@ -158,6 +160,13 @@ type TransactionLog struct {
 	TransactionIndex string   `json:"transactionIndex"`
 }
 
+type ErrorSinkLog struct {
+	ErrorMessage    string `json:"error-message"`
+	TimeAtRejection int64  `json:"time-at-rejection"`
+	TxHashID        string `json:"tx-hash-id"`
+}
+
+// Txdata is the harmony transaction data format
 type Txdata struct {
 	AccountNonce uint64          `json:"nonce"      gencodec:"required"`
 	Price        *big.Int        `json:"gasPrice"   gencodec:"required"`
@@ -166,7 +175,7 @@ type Txdata struct {
 	ToShardID    uint32          `json:"toShardID"  gencodec:"required"`
 	Recipient    *common.Address `json:"to"         rlp:"nil"` // nil means contract creation
 	Amount       *big.Int        `json:"value"      gencodec:"required"`
-	Payload      []byte          `json:"input"      gencodec:"required"`
+	Payload      []byte          `json:"data"      gencodec:"required"`
 
 	// Signature values
 	V *big.Int `json:"v" gencodec:"required"`
@@ -175,4 +184,56 @@ type Txdata struct {
 
 	// This is only used when marshaling to JSON.
 	Hash *common.Hash `json:"hash" rlp:"-"`
+}
+
+type StakingTransactionV1 struct {
+	TransactionByHashV1
+	Type string          `json:"type"`
+	Msg  json.RawMessage `json:"msg"`
+}
+type StakingTransactionV2 struct {
+	TransactionByHashV1
+	Type string          `json:"type"`
+	Msg  json.RawMessage `json:"msg"`
+}
+
+type BlockV1 struct {
+	Number             string                 `json:"number"`
+	Hash               string                 `json:"hash"`
+	ParentHash         string                 `json:"parentHash"`
+	Nonce              int64                  `json:"nonce"`
+	LogsBloom          string                 `json:"logsBloom"`
+	TransactionRoot    string                 `json:"transactionRoot"`
+	StateRoot          string                 `json:"stateRoot"`
+	Miner              string                 `json:"miner"`
+	Difficulty         int64                  `json:"difficulty"`
+	ExtraData          string                 `json:"extraData"`
+	Size               string                 `json:"size"`
+	GasLimit           string                 `json:"gasLimit"`
+	GasUsed            string                 `json:"gasUsed"`
+	Timestamp          string                 `json:"timestamp"`
+	StakingTransaction []StakingTransactionV1 `json:"stakingTransactions"`
+	Transaction        []TransactionByHashV1  `json:"transactions"`
+	Uncles             []string               `json:"uncles"`
+}
+
+type BlockV2 struct {
+	Number             int64                  `json:"number"`
+	Hash               string                 `json:"hash"`
+	ParentHash         string                 `json:"parentHash"`
+	Nonce              int64                  `json:"nonce"`
+	LogsBloom          string                 `json:"logsBloom"`
+	TransactionRoot    string                 `json:"transactionRoot"`
+	StateRoot          string                 `json:"stateRoot"`
+	Miner              string                 `json:"miner"`
+	Difficulty         int64                  `json:"difficulty"`
+	ExtraData          string                 `json:"extraData"`
+	Signers            []string               `json:"signers"`
+	Size               int64                  `json:"size"`
+	GasLimit           int64                  `json:"gasLimit"`
+	GasUsed            int64                  `json:"gasUsed"`
+	Timestamp          int64                  `json:"timestamp"`
+	StakingTransaction []StakingTransactionV2 `json:"stakingTransactions"`
+	Transaction        []TransactionByHashV2  `json:"transactions"`
+	Uncles             []string               `json:"uncles"`
 }

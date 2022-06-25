@@ -28,7 +28,7 @@ func deployContracts(cmd *cobra.Command, args []string) {
 
 	client, auth := crypto.NewClient()
 
-	address, tx, instance, err := devtoken.DeployDevtoken(auth, client, "DevToken", "DEVT", 18, big.NewInt(1000))
+	address, tx, instance, err := devtoken.DeployDevtoken(auth, client, "DevToken", "DEVT", 18, big.NewInt(0).Mul(big.NewInt(1000000000000000000), big.NewInt(100000)))
 	if err != nil {
 		log.Fatal(err)
 	}

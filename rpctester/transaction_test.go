@@ -1,16 +1,10 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/big"
-	localcrypto "percybolmer/rpc-shard-testing/rpctester/crypto"
 	"testing"
-
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/harmony-one/harmony/core/types"
 )
 
 func test_V1_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
@@ -653,7 +647,7 @@ func test_V1_getCurrentTransactionErrorSink(t *testing.T) {
 			}
 			// This step validates that the returned response is the correct data type
 			if resp.Result != nil {
-				var s []string // Wrong Data type, but func does not work
+				var s []ErrorSinkLog // Wrong Data type, but func does not work
 				err = json.Unmarshal(resp.Result, &s)
 				if err != nil {
 					testMetrics = append(testMetrics, TestMetric{
@@ -744,7 +738,7 @@ func test_V2_getCurrentTransactionErrorSink(t *testing.T) {
 			}
 			// This step validates that the returned response is the correct data type
 			if resp.Result != nil {
-				var s string // Wrong Data type, but func does not work
+				var s []ErrorSinkLog
 				err = json.Unmarshal(resp.Result, &s)
 				if err != nil {
 					testMetrics = append(testMetrics, TestMetric{
@@ -1516,7 +1510,7 @@ func test_sendRawStakingTransaction(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_sendRawStakingTransaction,
 				Params: []interface{}{
-					"", // TODO, How to Sign and Format this transaction?
+					"", // Create RLP sig in the test
 				},
 			},
 		},
@@ -1593,136 +1587,8 @@ func test_sendRawStakingTransaction(t *testing.T) {
 		})
 	}
 }
-func test_sendRawTransaction(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
 
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_raw_transaction", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_transaction_sendRawTransaction,
-				Params:  []interface{}{},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-
-			// Build the Transaction usign the deploy smart contract
-			if deployedToken == nil {
-				t.Skip("Skipping test because no smart contract deployed")
-			}
-			// Create a Transaction and Sign it for a transfer
-			fromAddress := localcrypto.GetAddress()
-
-			gasPrice, err := ethClient.SuggestGasPrice(context.Background())
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			txData := Txdata{
-				AccountNonce: auth.Nonce.Uint64(),
-				Price:        gasPrice,
-				GasLimit:     auth.GasLimit,
-				ShardID:      2,
-				ToShardID:    2,
-				Recipient:    &fromAddress,
-				Amount:       big.NewInt(10),
-			}
-			bdata, err := json.Marshal(txData)
-			if err != nil {
-				log.Fatal(err)
-			}
-			tx := types.NewTransaction(auth.Nonce.Uint64(), fromAddress, 0, big.NewInt(100), auth.GasLimit, gasPrice, bdata)
-			signedTx, err := types.SignTx(tx, types.NewEIP155Signer(big.NewInt(2)), localcrypto.GetPrivateKey())
-			if err != nil {
-				log.Fatal(err)
-			}
-			// Convert into a harmony Transaction since they use their own with ShardID
-
-			ts := types.Transactions{signedTx}
-
-			rlp := ts.GetRlp(0)
-
-			rawTxHex := hexutil.Encode(rlp)
-			tc.br.Params = append(tc.br.Params, rawTxHex)
-			// Perform the RPC Call
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-			}
-
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-				Params:   tc.br.Params,
-			})
-
-		})
-	}
-}
-func test_V1_getTransactionHistory(t *testing.T) {
+func (ts *testSuite) test_V1_getTransactionHistory(t *testing.T) {
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -1807,6 +1673,25 @@ func test_V1_getTransactionHistory(t *testing.T) {
 					t.Error(err)
 					return
 				}
+				// Verify that this Transaction is present in the TS
+				var found bool
+				for _, txHist := range s.Transactions {
+					if txHist.Hash == ts.LastTransactionHash {
+						found = true
+					}
+				}
+				if !found {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    "test transaction was not found in history",
+						Params:   tc.br.Params,
+					})
+					t.Error("test transaction was not found in history")
+					return
+				}
 			}
 
 			testMetrics = append(testMetrics, TestMetric{
@@ -1820,7 +1705,7 @@ func test_V1_getTransactionHistory(t *testing.T) {
 		})
 	}
 }
-func test_V2_getTransactionHistory(t *testing.T) {
+func (ts *testSuite) test_V2_getTransactionHistory(t *testing.T) {
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -1917,6 +1802,25 @@ func test_V2_getTransactionHistory(t *testing.T) {
 					t.Error(err)
 					return
 				}
+				// Verify that this Transaction is present in the TS
+				var found bool
+				for _, txHist := range s.Transactions {
+					if txHist.Hash == ts.LastTransactionHash {
+						found = true
+					}
+				}
+				if !found {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    "test transaction was not found in history",
+						Params:   tc.br.Params,
+					})
+					t.Error("test transaction was not found in history")
+					return
+				}
 			}
 
 			testMetrics = append(testMetrics, TestMetric{
@@ -1931,7 +1835,7 @@ func test_V2_getTransactionHistory(t *testing.T) {
 	}
 }
 
-func test_V1_getTransactionReceipt(t *testing.T) {
+func (ts *testSuite) test_V1_getTransactionReceipt(t *testing.T) {
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -1946,7 +1850,7 @@ func test_V1_getTransactionReceipt(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_V1_getTransactionReceipt,
 				Params: []interface{}{
-					smartContractDeploymentHash,
+					ts.LastTransactionHash,
 				},
 			},
 		},
@@ -2011,6 +1915,7 @@ func test_V1_getTransactionReceipt(t *testing.T) {
 					t.Error(err)
 					return
 				}
+				ts.LastTransactionReceiptV1 = s
 			}
 
 			testMetrics = append(testMetrics, TestMetric{
@@ -2025,7 +1930,7 @@ func test_V1_getTransactionReceipt(t *testing.T) {
 	}
 }
 
-func test_V2_getTransactionReceipt(t *testing.T) {
+func (ts *testSuite) test_V2_getTransactionReceipt(t *testing.T) {
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -2040,7 +1945,7 @@ func test_V2_getTransactionReceipt(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_V2_getTransactionReceipt,
 				Params: []interface{}{
-					smartContractDeploymentHash,
+					ts.LastTransactionHash,
 				},
 			},
 		},
@@ -2091,6 +1996,1631 @@ func test_V2_getTransactionReceipt(t *testing.T) {
 			// This step validates that the returned response is the correct data type
 			if resp.Result != nil {
 				var s TransactionReceipt_V2
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+				ts.LastTransactionBlockHash = s.BlockHash
+				ts.LastTransactionBlockNumber = s.BlockNumber
+				ts.LastTransactionReceiptV2 = s
+
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V1_getBlockTransactionCountByHash(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_transaction_hash_count", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V1_getBlockTransactionCountByHash,
+				Params: []interface{}{
+					ts.LastTransactionHash,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s string
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V2_getBlockTransactionCountByHash(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_transaction_hash_count", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V2_getBlockTransactionCountByHash,
+				Params: []interface{}{
+					ts.LastTransactionHash,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s int64
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V1_getBlockTransactionCountByNumber(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_transaction_hash_count", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V1_getBlockTransactionCountByNumber,
+				Params: []interface{}{
+					ts.LastTransactionBlockNumber,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s string
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V2_getBlockTransactionCountByNumber(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_transaction_hash_count", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V2_getBlockTransactionCountByNumber,
+				Params: []interface{}{
+					ts.LastTransactionBlockNumber,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s int64
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V1_getTransactionByHash(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_transaction_should_exist", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V1_getTransactionByHash,
+				Params: []interface{}{
+					ts.LastTransactionHash,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s TransactionByHashV1
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V2_getTransactionByHash(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_transaction_should_exist", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V2_getTransactionByHash,
+				Params: []interface{}{
+					ts.LastTransactionHash,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s TransactionByHashV2
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V1_getTransactionByBlockNumberAndIndex(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_transaction_should_exist", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V1_getTransactionByBlockNumberAndIndex,
+				Params: []interface{}{
+					ts.LastTransactionReceiptV1.BlockNumber,
+					ts.LastTransactionReceiptV1.TransactionIndex,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s TransactionByHashV1
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+func (ts *testSuite) test_V2_getTransactionByBlockNumberAndIndex(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_transaction_should_exist", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V2_getTransactionByBlockNumberAndIndex,
+				Params: []interface{}{
+					ts.LastTransactionReceiptV2.BlockNumber,
+					ts.LastTransactionReceiptV2.TransactionIndex,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s TransactionByHashV2
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V1_getTransactionByBlockHashAndIndex(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_transaction_should_exist", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V1_getTransactionByBlockHashAndIndex,
+				Params: []interface{}{
+					ts.LastTransactionReceiptV1.BlockHash,
+					ts.LastTransactionReceiptV1.TransactionIndex,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s TransactionByHashV1
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V2_getTransactionByBlockHashAndIndex(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_transaction_should_exist", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V2_getTransactionByBlockHashAndIndex,
+				Params: []interface{}{
+					ts.LastTransactionReceiptV2.BlockHash,
+					ts.LastTransactionReceiptV2.TransactionIndex,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s TransactionByHashV2
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V1_getBlockByNumber(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_existing_block", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V1_getBlockByNumber,
+				Params: []interface{}{
+					ts.LastTransactionReceiptV1.BlockNumber,
+					true,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s BlockV1
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V2_getBlockByNumber(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	type include struct {
+		FullTx         bool `json:"fullTx"`
+		WithSigners    bool `json:"withSigner"`
+		IncludeSigners bool `json:"includeSigners"`
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_existing_block", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V2_getBlockByNumber,
+				Params: []interface{}{
+					ts.LastTransactionReceiptV2.BlockNumber,
+					include{
+						FullTx:         true,
+						WithSigners:    false,
+						IncludeSigners: false,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s BlockV2
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V1_getBlockByHash(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_existing_block", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V1_getBlockByHash,
+				Params: []interface{}{
+					ts.LastTransactionReceiptV1.BlockHash,
+					true,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s BlockV1
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V2_getBlockByHash(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	type include struct {
+		FullTx         bool `json:"fullTx"`
+		WithSigners    bool `json:"withSigner"`
+		IncludeSigners bool `json:"includeSigners"`
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_existing_block", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V2_getBlockByHash,
+				Params: []interface{}{
+					ts.LastTransactionReceiptV2.BlockHash,
+					include{
+						FullTx:         true,
+						WithSigners:    false,
+						IncludeSigners: false,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s BlockV2
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V1_getBlocks(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_existing_block", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V1_getBlocks,
+				Params: []interface{}{
+					ts.LastTransactionReceiptV1.BlockNumber,
+					ts.LastTransactionReceiptV1.BlockNumber,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s []BlockV1
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V2_getBlocks(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	type include struct {
+		FullTx         bool `json:"fullTx"`
+		WithSigners    bool `json:"withSigner"`
+		IncludeSigners bool `json:"includeSigners"`
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_existing_block", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_V2_getBlocks,
+				Params: []interface{}{
+					ts.LastTransactionReceiptV2.BlockNumber,
+					ts.LastTransactionReceiptV2.BlockNumber,
+					include{
+						FullTx:         true,
+						WithSigners:    false,
+						IncludeSigners: false,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s []BlockV2
+				err = json.Unmarshal(resp.Result, &s)
+				if err != nil {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    err.Error(),
+						Params:   tc.br.Params,
+					})
+					t.Error(err)
+					return
+				}
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_tx(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_existing_tx", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_transaction_tx,
+				Params: []interface{}{
+					ts.LastTransactionHash,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.br)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			// Perform the RPC Call
+			resp, err := Call(data, tc.br.Method)
+			if err != nil {
+				testMetrics = append(testMetrics, TestMetric{
+					Method:   tc.br.Method,
+					Test:     tc.name,
+					Pass:     false,
+					Duration: resp.Duration,
+					Error:    err.Error(),
+					Params:   tc.br.Params,
+				})
+				t.Error(err)
+				return
+			}
+			if resp.Error != nil {
+				if resp.Error.Code != tc.expectedErrorCode {
+					testMetrics = append(testMetrics, TestMetric{
+						Method:   tc.br.Method,
+						Test:     tc.name,
+						Pass:     false,
+						Duration: resp.Duration,
+						Error:    resp.Error.Message,
+						Params:   tc.br.Params,
+					})
+					t.Error(resp.Error.Message)
+					return
+				}
+			}
+			// This step validates that the returned response is the correct data type
+			if resp.Result != nil {
+				var s Transaction
 				err = json.Unmarshal(resp.Result, &s)
 				if err != nil {
 					testMetrics = append(testMetrics, TestMetric{

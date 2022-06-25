@@ -54,7 +54,6 @@ TransactionHistory is always empty on Shard1
 
 # Questions to harmony
 How to perform a SendRawStakingTransaction
-How to perform a rawTransaction
 
 Diffrent endpoitns for getTransactionHistory in docs, but not true
 

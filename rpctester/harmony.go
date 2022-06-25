@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,9 +16,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/harmony-one/harmony/core/types"
 	"github.com/joho/godotenv"
 )
 
@@ -62,13 +66,29 @@ const (
 	METHOD_transaction_V1_pendingTransactions  = "hmy_pendingTransactions"
 	METHOD_transaction_V2_pendingTransactions  = "hmyv2_pendingTransactions"
 	// TODO How do I format the RawStaking Transaction?
-	METHOD_transaction_sendRawStakingTransaction = "hmy_sendRawStakingTransaction"
-	METHOD_transaction_sendRawTransaction        = "hmy_sendRawTransaction"
-	// Different endpoints?
-	METHOD_transaction_V1_getTransactionHistory = "hmy_getTransactionsHistory"
-	METHOD_transaction_V2_getTransactionHistory = "hmyv2_getTransactionsHistory"
-	METHOD_transaction_V1_getTransactionReceipt = "hmy_getTransactionReceipt"
-	METHOD_transaction_V2_getTransactionReceipt = "hmyv2_getTransactionReceipt"
+	METHOD_transaction_sendRawStakingTransaction              = "hmy_sendRawStakingTransaction"
+	METHOD_transaction_sendRawTransaction                     = "hmy_sendRawTransaction"
+	METHOD_transaction_V1_getTransactionHistory               = "hmy_getTransactionsHistory"
+	METHOD_transaction_V2_getTransactionHistory               = "hmyv2_getTransactionsHistory"
+	METHOD_transaction_V1_getTransactionReceipt               = "hmy_getTransactionReceipt"
+	METHOD_transaction_V2_getTransactionReceipt               = "hmyv2_getTransactionReceipt"
+	METHOD_transaction_V1_getBlockTransactionCountByHash      = "hmy_getBlockTransactionCountByHash"
+	METHOD_transaction_V2_getBlockTransactionCountByHash      = "hmyv2_getBlockTransactionCountByHash"
+	METHOD_transaction_V1_getBlockTransactionCountByNumber    = "hmy_getBlockTransactionCountByNumber"
+	METHOD_transaction_V2_getBlockTransactionCountByNumber    = "hmyv2_getBlockTransactionCountByNumber"
+	METHOD_transaction_V1_getTransactionByHash                = "hmy_getTransactionByHash"
+	METHOD_transaction_V2_getTransactionByHash                = "hmyv2_getTransactionByHash"
+	METHOD_transaction_V1_getTransactionByBlockNumberAndIndex = "hmy_getTransactionByBlockNumberAndIndex"
+	METHOD_transaction_V2_getTransactionByBlockNumberAndIndex = "hmyv2_getTransactionByBlockNumberAndIndex"
+	METHOD_transaction_V1_getTransactionByBlockHashAndIndex   = "hmy_getTransactionByBlockHashAndIndex"
+	METHOD_transaction_V2_getTransactionByBlockHashAndIndex   = "hmyv2_getTransactionByBlockHashAndIndex"
+	METHOD_transaction_V1_getBlockByNumber                    = "hmy_getBlockByNumber"
+	METHOD_transaction_V2_getBlockByNumber                    = "hmyv2_getBlockByNumber"
+	METHOD_transaction_V1_getBlockByHash                      = "hmy_getBlockByHash"
+	METHOD_transaction_V2_getBlockByHash                      = "hmyv2_getBlockByHash"
+	METHOD_transaction_V1_getBlocks                           = "hmy_getBlocks"
+	METHOD_transaction_V2_getBlocks                           = "hmyv2_getBlocks"
+	METHOD_transaction_tx                                     = "tx"
 )
 
 var (
@@ -82,6 +102,8 @@ var (
 	url                         string
 	smartContractDeploymentHash string
 	smartContractAddress        common.Address
+	// Bigint representation of 1
+	ONE *big.Int
 )
 
 func init() {
@@ -89,12 +111,18 @@ func init() {
 	httpClient = &http.Client{Timeout: time.Duration(5) * time.Second}
 	testMetrics = []TestMetric{}
 
+	ONE = big.NewInt(1000000000000000000)
+
 	// Load .dotenv file
 	environment := os.Getenv("RPCTESTER_ENVIRONMENT")
 
 	if environment == "production" {
 		if err := godotenv.Load(".env-prod"); err != nil {
 			log.Fatal("Error loading .env-prod file")
+		}
+	} else if environment == "dev" {
+		if err := godotenv.Load(".env-dev"); err != nil {
+			log.Fatal("Error loading .env-dev file")
 		}
 	} else {
 		if err := godotenv.Load(".env"); err != nil {
@@ -261,4 +289,51 @@ func Address(id string, offset, page int, tx_view string) (*AddressResponse, err
 	response.Duration = duration.String()
 
 	return &response, nil
+}
+
+// CreateRLPString is a wrapper to help with generating RLP
+func CreateRLPString(to common.Address, from common.Address, amount big.Int, data []byte) (string, error) {
+	nonce, err := ethClient.PendingNonceAt(context.Background(), from)
+	if err != nil {
+		return "", err
+	}
+
+	shardID, err := crypto.GetShardID()
+	if err != nil {
+		return "", err
+	}
+	gasPrice, err := ethClient.SuggestGasPrice(context.Background())
+	if err != nil {
+		return "", err
+	}
+	var selectedGasLimit uint64
+	if data != nil {
+		gasLimit, err := ethClient.EstimateGas(context.Background(), ethereum.CallMsg{
+			To:   &to,
+			Data: data,
+		})
+		if err != nil {
+			return "", err
+		}
+		selectedGasLimit = gasLimit
+	}
+	if selectedGasLimit == 0 {
+		selectedGasLimit = auth.GasLimit
+	}
+	// Create TX with Harmony Flavor
+	hmy_tx := types.NewTransaction(nonce, to, uint32(shardID), &amount, selectedGasLimit, gasPrice, data)
+
+	chainID, err := ethClient.ChainID(context.Background())
+	if err != nil {
+		return "", err
+	}
+
+	signedTx, err := types.SignTx(hmy_tx, types.NewEIP155Signer(chainID), crypto.GetPrivateKey())
+	if err != nil {
+		return "", err
+	}
+	ts := types.Transactions{signedTx}
+
+	rawTxHex := hexutil.Encode(ts.GetRlp(0))
+	return rawTxHex, nil
 }

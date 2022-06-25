@@ -97,6 +97,7 @@ If you want to use a mainnet, you can create a `.env-prod` file and insert the r
 and private key. 
 
 Set the environment variable `RPCTESTER_ENVIRONMENT` = "production" to use the `.env-prod`
+Set it to = `dev` to use `.env-dev`
 
 ## Compiling solidity contracts
 This requires Solc installed
