@@ -9,6 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// testSuite is used to Sync information between some sanity tests
+// such as storing TX hashes and blocks
 type testSuite struct {
 	LastTransactionHash        string
 	LastTransactionBlockHash   string
