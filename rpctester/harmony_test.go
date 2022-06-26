@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 )
@@ -16,9 +18,13 @@ func init() {
 	ts = &testSuite{}
 }
 func Test_RPC_Sanity(t *testing.T) {
+	t.Run("ProtocolMethods", test_ProtocolMethods)
+	t.Run("StakingMethods", test_StakingMethods)
+	t.Run("ContractMethods", test_ContractMethods)
 	t.Run("AccountMethods", test_AccountMethods)
 	t.Run("FilterMethods", test_FilterMethods)
 	t.Run("TransactionMethods", test_TransactionMethods)
+	t.Run("TraceMethods", test_TraceMethods)
 	// Now generate report
 	GenerateReport()
 
@@ -104,5 +110,118 @@ func test_FilterMethods(t *testing.T) {
 }
 
 func test_ContractMethods(t *testing.T) {
+	t.Run("getStorageAt", test_getStorageAt)
+	t.Run("getCode", test_getCode)
+	t.Run("call", test_call)
+	t.Run("estimateGas", test_EstimateGas)
+}
 
+func test_TraceMethods(t *testing.T) {
+	t.Run("traceBlock", ts.test_traceBlock)
+	t.Run("traceTransaction", ts.test_traceTransaction)
+}
+
+func test_ProtocolMethods(t *testing.T) {
+	t.Run("isLastBlocK", test_isLastBlock)
+	t.Run("epochLastBlock", test_epochLastBlock)
+	t.Run("lastestHeader", ts.test_latestHeader)
+	t.Run("shardingStructure", test_getShardingStructure)
+	t.Run("blockNumber_V1", test_V1_blockNumber)
+	t.Run("blockNumber_V2", test_V2_blockNumber)
+	t.Run("syncing", test_syncing)
+	t.Run("gasPrice_V1", test_V1_gasPrice)
+	t.Run("gasPrice_V2", test_V2_gasPrice)
+	t.Run("peerCount", test_peerCount)
+	t.Run("getEpoch_V1", test_V1_getEpoch)
+	t.Run("getEpoch_V2", test_V2_getEpoch)
+	t.Run("getLeader", test_getLeader)
+}
+
+func test_StakingMethods(t *testing.T) {
+	t.Run("getValidators_V1", ts.test_V1_getValidators)
+	t.Run("getValidators_V2", ts.test_V2_getValidators)
+	t.Run("getCirculatingSupply", test_getCirculatingSupply)
+	t.Run("getTotalSupply", test_getTotalSupply)
+	t.Run("getStakingNetworkInfo", test_getStakingNetworkInfo)
+	t.Run("getAllValidatorInformation", test_getAllValidatorInformation)
+	t.Run("getAllValidatorInformationByBlockNumber", ts.test_getAllValidatorInformationByBlockNumber)
+	t.Run("getUtilityMetrics", test_getUtilityMetric)
+	/**
+	TODO -- Right now we use the global Validators list to select a Validator ADD
+	Best would be to use a newly creating that gets created in this script
+	*/
+	t.Run("getDelegationsByValidator", ts.test_getDelegationsByValidator)
+	t.Run("getDelegationsByDelegatorAndValidator", ts.test_getDelegationsByDelegatorAndValidator)
+	t.Run("getDelegationsByDelegator", ts.test_getDelegationsByDelegator)
+	t.Run("getValidatorMetrics", ts.test_getValidatorMetrics)
+	t.Run("medianSnapshot", test_getMedianRawStakeSnapshot)
+	t.Run("getActiveValidatorAddresses", test_getActiveValidatorAddresses)
+	t.Run("getAllValidatorAddresses", test_getAllValidatorAddresses)
+	t.Run("getCurrentStakingErrorSink_V1", test_V1_getCurrentStakingErrorSink)
+	t.Run("getCurrentStakingErrorSink_V2", test_V2_getCurrentStakingErrorSink)
+	t.Run("getValidatorInformation", ts.test_getValidatorInformation)
+	t.Run("getSignedBlocks", test_getSignedBlocks)
+	t.Run("isBlockSigner_V1", ts.test_V1_isBlockSigner)
+	t.Run("isBlockSigner_V2", ts.test_V2_isBlockSigner)
+	t.Run("getBlockSigners_V1", ts.test_V1_getBlockSigners)
+	t.Run("getBlockSigners_V2", ts.test_V2_getBlockSigners)
+
+}
+
+// callAndValidateDataType is a helper that calls the request, and marshals into wanted data type
+func callAndValidateDataType(t *testing.T, testName string, expectedErrorCode int64, br BaseRequest, wantedDataType interface{}) (BaseResponse, error) {
+	// Marshal request
+	txdata, err := json.Marshal(br)
+	if err != nil {
+		testMetrics = append(testMetrics, TestMetric{
+			Method: br.Method,
+			Test:   testName,
+			Pass:   false,
+			Error:  err.Error(),
+			Params: br.Params,
+		})
+		return BaseResponse{}, err
+	}
+	// Perform the RPC Call
+	resp, err := Call(txdata, br.Method)
+	if err != nil {
+		testMetrics = append(testMetrics, TestMetric{
+			Method:   br.Method,
+			Test:     testName,
+			Pass:     false,
+			Duration: resp.Duration,
+			Error:    err.Error(),
+			Params:   br.Params,
+		})
+		return BaseResponse{}, err
+	}
+	if resp.Error != nil {
+		if resp.Error.Code != expectedErrorCode {
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   br.Method,
+				Test:     testName,
+				Pass:     false,
+				Duration: resp.Duration,
+				Error:    resp.Error.Message,
+				Params:   br.Params,
+			})
+			return BaseResponse{}, errors.New(resp.Error.Message)
+		}
+	}
+	// This step validates that the returned response is the correct data type
+	if resp.Result != nil {
+		err = json.Unmarshal(resp.Result, wantedDataType)
+		if err != nil {
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   br.Method,
+				Test:     testName,
+				Pass:     false,
+				Duration: resp.Duration,
+				Error:    err.Error(),
+				Params:   br.Params,
+			})
+			return BaseResponse{}, err
+		}
+	}
+	return *resp, nil
 }

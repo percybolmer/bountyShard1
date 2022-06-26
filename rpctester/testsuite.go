@@ -17,6 +17,9 @@ type testSuite struct {
 	LastTransactionBlockNumber int64
 	LastTransactionReceiptV1   TransactionReceipt_V1
 	LastTransactionReceiptV2   TransactionReceipt_V2
+	NetworkHeader              NetworkHeader
+	ValidatorsV1               GetValidatorsV1
+	ValidatorsV2               GetValidatorsV2
 }
 
 func (ts *testSuite) test_sendRawTransaction(t *testing.T) {

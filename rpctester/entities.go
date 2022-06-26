@@ -237,3 +237,176 @@ type BlockV2 struct {
 	Transaction        []TransactionByHashV2  `json:"transactions"`
 	Uncles             []string               `json:"uncles"`
 }
+
+type RpcCallArgs struct {
+	From     string `json:"from,omitempty"`
+	To       string `json:"to"`
+	Gas      int64  `json:"gas,omitempty"`
+	GasPrice int64  `json:"gasPrice,omitempty"`
+	Value    int64  `json:"value,omitempty"`
+	Data     string `json:"data,omitempty"`
+}
+
+type NetworkHeader struct {
+	BlockHash        string `json:"blockHash"`
+	BlockNumber      int64  `json:"blockNumber"`
+	ShardID          int64  `json:"shardID"`
+	Leader           string `json:"leader"`
+	ViewID           int64  `json:"viewID"`
+	Epoch            int64  `json:"epoch"`
+	Timestamp        string `json:"timestamp"`
+	Unixtime         int64  `json:"unixtime"`
+	LastCommitSig    string `json:"lastCommitSig"`
+	LastCommitBitmap string `json:"lastCommitBitmap"`
+}
+
+type Shard struct {
+	Current bool   `json:"current"`
+	HTTP    string `json:"http"`
+	ShardID int64  `json:"shardID"`
+	WS      string `json:"ws"`
+}
+type shardingStructure []Shard
+
+type NetworkStakingInfo struct {
+	TotalSupply       string `json:"total-supply"`
+	CirculatingSupply string `json:"circulating-supply"`
+	EpochLastBlock    int    `json:"epoch-last-block"`
+	TotalStaking      int64  `json:"total-staking"`
+	MedianRawStake    int64  `json:"median-raw-stake"`
+}
+
+type ValidatorInfo struct {
+	CurrentEpochSign        CurrentEpochSign          `json:"current-epoch-signing-percent"`
+	CurrentEpochVotingPower []CurrentEpochVotingPower `json:"current-epoch-voting-power"`
+	Validator               Validator                 `json:"validator"`
+}
+
+type CurrentEpochSign struct {
+	CurrentSigned      int    `json:"current-epoch-signed"`
+	CurrentEpochToSign int    `json:"current-epoch-to-sign"`
+	Percentage         string `json:"percentage"`
+}
+
+type CurrentEpochVotingPower struct {
+	EffectiveStake      string `json:"effective-stake"`
+	ShardID             int    `json:"shard-id"`
+	VotingPowerAdjusted string `json:"voting-power-adjusted"`
+	VotingPowerRaw      string `json:"voting-power-raw"`
+}
+
+type Validator struct {
+	Active              bool                  `json:"active"`
+	Address             string                `json:"address"`
+	Availability        ValidatorAvailability `json:"availability"`
+	Banned              bool                  `json:"banned"`
+	BlsPublicKeys       []string              `json:"bls-public-keys"`
+	CreationHeight      int                   `json:"creation-height"`
+	Delegations         []Delegation          `json:"delegations"`
+	Details             string                `json:"details"`
+	Identity            string                `json:"identity"`
+	LastEpochInCommitee int                   `json:"last-epoch-in-committee"`
+	MaxChangeRate       string                `json:"max-change-rate"`
+	MaxRate             string                `json:"max-rate"`
+	MaxTotalDelegation  big.Int               `json:"max-total-delegation"`
+	MinSelfDelegation   big.Int               `json:"min-self-delegation"`
+	Name                string                `json:"name"`
+	Rate                string                `json:"rate"`
+	SecurityContact     string                `json:"security-contact"`
+	UpdateHeight        int64                 `json:"update-height"`
+	Website             string                `json:"harmony.one"`
+}
+
+type ValidatorAvailability struct {
+	NumBlockSigned int `json:"num-blocks-signed"`
+	NumBlockToSign int `json:"num-blocks-to-sign"`
+}
+
+type Delegation struct {
+	Amount        big.Int           `json:"amount"`
+	DelegatorAddr string            `json:"delegator-address"`
+	Reward        int64             `json:"reward"`
+	Undelegations []RPCUndelegation `json:"undelegations"`
+}
+type UtilityMetrics struct {
+	AccumulatorSnapshot     int    `json:"AccumulatorSnapshot"`
+	CurrentStakedPercentage string `json:"CurrentStakedPercentage"`
+	Deviation               string `json:"Deviation"`
+	Adjustment              string `json:"Adjustment"`
+}
+
+type DelegationByValidator struct {
+	ValidatorAddress string            `json:"validator_address"`
+	DelegatorAddress string            `json:"delegator_address"`
+	Amount           big.Int           `json:"amount"`
+	Reward           big.Int           `json:"reward"`
+	Undelegations    []RPCUndelegation `json:"undelegations"`
+}
+
+type RPCUndelegation struct {
+	Amount big.Int `json:"amount"`
+	Reward big.Int `json:"reward"`
+}
+
+type ValidatorMetrics struct {
+	NumJailed           big.Int          `json:"NumJailed"`
+	TotalEfectiveStaked float32          `json:"TotalEffectiveStake"`
+	VotingPowerPerShard []VotingPerShard `json:"VotingPowerPerShard"`
+	BLSKeyPerShard      []BLSKeyPerShard `json:"BLSKeyPerShard"`
+}
+
+type VotingPerShard struct {
+	ShardID     int     `json:"shard-id"`
+	VotingPower float32 `json:"voting-power"`
+}
+
+type BLSKeyPerShard struct {
+	ShardID int      `json:"shard-id"`
+	Keys    []string `json:"keys"`
+}
+
+type GetValidatorsV1 struct {
+	ShardID    uint32              `json:"shardID"`
+	Validators []SimpleValidatorV1 `json:"validators"`
+}
+
+type SimpleValidatorV1 struct {
+	Address string `json:"address"`
+	Balance string `json:"balance"`
+}
+
+type GetValidatorsV2 struct {
+	ShardID    uint32              `json:"shardID"`
+	Validators []SimpleValidatorV2 `json:"validators"`
+}
+
+type SimpleValidatorV2 struct {
+	Address string  `json:"address"`
+	Balance big.Int `json:"balance"`
+}
+
+type TraceBlock struct {
+	BlockNumber         int64       `json:"blockNumber"`
+	BlockHash           string      `json:"blockHash"`
+	TransactionHash     string      `json:"transactionHash"`
+	TransactionPosition int         `json:"transactionPosition"`
+	Subtraces           int         `json:"subtraces"`
+	TraceAddress        []string    `json:"traceAddress"`
+	Type                string      `json:"call"`
+	Action              TraceAction `json:"action"`
+	Result              TraceResult `json:"traceResult"`
+}
+
+type TraceAction struct {
+	CallType string `json:"callType"`
+	Value    string `json:"value"`
+	To       string `json:"to"`
+	Gas      string `json:"gas"`
+	From     string `json:"from"`
+	Input    string `json:"input"`
+}
+
+type TraceResult struct {
+	Output  string `json:"output"`
+	GasUsed string `json:"gasUsed"`
+}
