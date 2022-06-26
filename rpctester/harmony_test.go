@@ -2,8 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"math/big"
+	"errors"
 	"testing"
 	"time"
 )
@@ -19,9 +18,13 @@ func init() {
 	ts = &testSuite{}
 }
 func Test_RPC_Sanity(t *testing.T) {
+	t.Run("ProtocolMethods", test_ProtocolMethods)
+	t.Run("StakingMethods", test_StakingMethods)
+	t.Run("ContractMethods", test_ContractMethods)
 	t.Run("AccountMethods", test_AccountMethods)
 	t.Run("FilterMethods", test_FilterMethods)
 	t.Run("TransactionMethods", test_TransactionMethods)
+	t.Run("TraceMethods", test_TraceMethods)
 	// Now generate report
 	GenerateReport()
 
@@ -31,12 +34,9 @@ func Test_RPC_Sanity(t *testing.T) {
 func test_TransactionMethods(t *testing.T) {
 	// Begin by sending Transaction so we can get transaction hashes to use
 	t.Run("sendRawTransaction", ts.test_sendRawTransaction)
-	t.Run("getStakingTransactionByBlockHashAndIndex", test_V1_getStakingTransactionByBlockHashAndIndex)
-	t.Run("getStakingTransactionByBlockHasAndIndex_V2", test_V2_getStakingTransactionByBlockHashAndIndex)
-	t.Run("getStakingTransactionByBlockNumberAndIndex", test_V1_getStakingTransactionByBlockNumberAndIndex)
-	t.Run("getStakingTransactionByBlockNumberAndIndex_V2", test_V2_getStakingTransactionByBlockNumberAndIndex)
-	t.Run("getStakingTransactionByHash_V1", test_V1_getStakingTransactionByHash)
-	t.Run("getStakingTransactionByHash_V2", test_V2_getStakingTransactionByHash)
+	// TODO confirm how to
+	//t.Run("sendRawStakingTransaction", test_sendRawStakingTransaction)
+
 	t.Run("getCurrentTransactionErrorSink_V1", test_V1_getCurrentTransactionErrorSink)
 	t.Run("getCurrentTransactionErrorSink_V2", test_V2_getCurrentTransactionErrorSink)
 	t.Run("getPendingCrossLinks_V1", test_V1_getPendingCrossLinks)
@@ -47,10 +47,18 @@ func test_TransactionMethods(t *testing.T) {
 	t.Run("getCXReceiptByHash_V2", test_V2_getCXReceiptByHash)
 	t.Run("getPendingTransaction_V1", test_V1_pendingTransactions)
 	t.Run("getPendingTransaction_V2", test_V2_pendingTransactions)
-	// TODO confirm how to
-	//t.Run("sendRawStakingTransaction", test_sendRawStakingTransaction)
 	t.Log("Giving the network some time to congest transactions sent")
 	time.Sleep(10 * time.Second)
+	// Staking Transaction checks disabled until Stking Transaction Solved
+	// Example in GO SDK
+	// https://github.dev/harmony-one/go-sdk/blob/master/cmd/subcommands/staking.go
+	// Need BLS keys https://docs.harmony.one/home/network/validators/node-setup/generating-a-bls-key
+	// t.Run("getStakingTransactionByBlockHashAndIndex", test_V1_getStakingTransactionByBlockHashAndIndex)
+	// t.Run("getStakingTransactionByBlockHasAndIndex_V2", test_V2_getStakingTransactionByBlockHashAndIndex)
+	// t.Run("getStakingTransactionByBlockNumberAndIndex", test_V1_getStakingTransactionByBlockNumberAndIndex)
+	// t.Run("getStakingTransactionByBlockNumberAndIndex_V2", test_V2_getStakingTransactionByBlockNumberAndIndex)
+	// t.Run("getStakingTransactionByHash_V1", test_V1_getStakingTransactionByHash)
+	// t.Run("getStakingTransactionByHash_V2", test_V2_getStakingTransactionByHash)
 	t.Run("getTransactionHistory_V1", ts.test_V1_getTransactionHistory)
 	t.Run("getTransactionHistory_V2", ts.test_V2_getTransactionHistory)
 	t.Run("getTransactionReceipt_V1", ts.test_V1_getTransactionReceipt)
@@ -77,13 +85,14 @@ func test_TransactionMethods(t *testing.T) {
 
 // test_AccountsMethods calls all Account RPC Methods and verifies that the data returned is correct
 func test_AccountMethods(t *testing.T) {
-
+	// TODO can Probably enhance these tests now that Transaction methods works, to verify amounts etc
 	t.Run("getBalanceByBlockNumber_V2", test_V2_getBalanceByBlockNumber)
 	t.Run("getBalanceByBlockNumber_V1", test_V1_getBalanceByBlockNumber)
 	t.Run("getTransactionCount_V2", test_V2_hmy_getTransactionCount)
 	t.Run("getTransactionCount_V1", test_V1_hmy_getTransactionCount)
 	t.Run("getBalance_V2", test_V2_hmy_getBalance)
 	t.Run("getBalance_V1", test_V1_hmy_getBalance)
+	// Address is an explorer function, skip for now
 	//t.Run("address", test_address)
 }
 
@@ -100,1286 +109,119 @@ func test_FilterMethods(t *testing.T) {
 	t.Run("getLogs", test_getLogs)
 }
 
-func test_getLogs(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_working_log", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_filter_getLogs,
-				Params: []interface{}{
-					Filter{
-						Address: "0xcF664087a5bB0237a0BAd6742852ec6c8d69A27a",
-						//FromBlock: "latest",
-						//Topics: []string{"0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b"},
-					},
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s []FilterChange
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-					})
-					t.Error(err)
-					return
-				}
-			}
-
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-			})
-
-		})
-	}
+func test_ContractMethods(t *testing.T) {
+	t.Run("getStorageAt", test_getStorageAt)
+	t.Run("getCode", test_getCode)
+	t.Run("call", test_call)
+	t.Run("estimateGas", test_EstimateGas)
 }
 
-func test_getFilterChanges(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_change_log", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_filter_getFilterChanges,
-				Params: []interface{}{
-					createdFilterID,
-				},
-			},
-		},
-		{
-			name:              fmt.Sprintf("%s_no_such_id", t.Name()),
-			expectedErrorCode: -32000,
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_filter_getFilterChanges,
-				Params: []interface{}{
-					"0x01",
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s []FilterChange
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-					})
-					t.Error(err)
-					return
-				}
-			}
-
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-			})
-
-		})
-	}
+func test_TraceMethods(t *testing.T) {
+	t.Run("traceBlock", ts.test_traceBlock)
+	t.Run("traceTransaction", ts.test_traceTransaction)
 }
 
-func test_NewBlockFilter(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_new_blockfilter", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_filter_newBlockFilter,
-				Params:  []interface{}{},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-			}
-
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-				Params:   tc.br.Params,
-			})
-
-		})
-	}
+func test_ProtocolMethods(t *testing.T) {
+	t.Run("isLastBlocK", test_isLastBlock)
+	t.Run("epochLastBlock", test_epochLastBlock)
+	t.Run("lastestHeader", ts.test_latestHeader)
+	t.Run("shardingStructure", test_getShardingStructure)
+	t.Run("blockNumber_V1", test_V1_blockNumber)
+	t.Run("blockNumber_V2", test_V2_blockNumber)
+	t.Run("syncing", test_syncing)
+	t.Run("gasPrice_V1", test_V1_gasPrice)
+	t.Run("gasPrice_V2", test_V2_gasPrice)
+	t.Run("peerCount", test_peerCount)
+	t.Run("getEpoch_V1", test_V1_getEpoch)
+	t.Run("getEpoch_V2", test_V2_getEpoch)
+	t.Run("getLeader", test_getLeader)
 }
 
-func test_NewPendingTransactionFilter(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
+func test_StakingMethods(t *testing.T) {
+	t.Run("getValidators_V1", ts.test_V1_getValidators)
+	t.Run("getValidators_V2", ts.test_V2_getValidators)
+	t.Run("getCirculatingSupply", test_getCirculatingSupply)
+	t.Run("getTotalSupply", test_getTotalSupply)
+	t.Run("getStakingNetworkInfo", test_getStakingNetworkInfo)
+	t.Run("getAllValidatorInformation", test_getAllValidatorInformation)
+	t.Run("getAllValidatorInformationByBlockNumber", ts.test_getAllValidatorInformationByBlockNumber)
+	t.Run("getUtilityMetrics", test_getUtilityMetric)
+	/**
+	TODO -- Right now we use the global Validators list to select a Validator ADD
+	Best would be to use a newly creating that gets created in this script
+	*/
+	t.Run("getDelegationsByValidator", ts.test_getDelegationsByValidator)
+	t.Run("getDelegationsByDelegatorAndValidator", ts.test_getDelegationsByDelegatorAndValidator)
+	t.Run("getDelegationsByDelegator", ts.test_getDelegationsByDelegator)
+	t.Run("getValidatorMetrics", ts.test_getValidatorMetrics)
+	t.Run("medianSnapshot", test_getMedianRawStakeSnapshot)
+	t.Run("getActiveValidatorAddresses", test_getActiveValidatorAddresses)
+	t.Run("getAllValidatorAddresses", test_getAllValidatorAddresses)
+	t.Run("getCurrentStakingErrorSink_V1", test_V1_getCurrentStakingErrorSink)
+	t.Run("getCurrentStakingErrorSink_V2", test_V2_getCurrentStakingErrorSink)
+	t.Run("getValidatorInformation", ts.test_getValidatorInformation)
+	t.Run("getSignedBlocks", test_getSignedBlocks)
+	t.Run("isBlockSigner_V1", ts.test_V1_isBlockSigner)
+	t.Run("isBlockSigner_V2", ts.test_V2_isBlockSigner)
+	t.Run("getBlockSigners_V1", ts.test_V1_getBlockSigners)
+	t.Run("getBlockSigners_V2", ts.test_V2_getBlockSigners)
 
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_new_pending_transaction", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_filter_newPendingtransactionFilter,
-				Params:  []interface{}{},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-			}
-
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-				Params:   tc.br.Params,
-			})
-
-		})
-	}
 }
 
-// newFilter will store a successful filter in the
-func test_newFilter(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
+// callAndValidateDataType is a helper that calls the request, and marshals into wanted data type
+func callAndValidateDataType(t *testing.T, testName string, expectedErrorCode int64, br BaseRequest, wantedDataType interface{}) (BaseResponse, error) {
+	// Marshal request
+	txdata, err := json.Marshal(br)
+	if err != nil {
+		testMetrics = append(testMetrics, TestMetric{
+			Method: br.Method,
+			Test:   testName,
+			Pass:   false,
+			Error:  err.Error(),
+			Params: br.Params,
+		})
+		return BaseResponse{}, err
 	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_new_filter", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_filter_newFilter,
-				Params: []interface{}{
-					Filter{
-
-						FromBlock: "0x1",
-						ToBlock:   "0x2",
-						Address:   address,
-						Topics:    []string{"0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b"},
-					},
-				},
-			},
-		}, {
-			name:              fmt.Sprintf("%s_bad_topic_format", t.Name()),
-			expectedErrorCode: -32602,
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_filter_newFilter,
-				Params: []interface{}{
-					Filter{
-
-						FromBlock: "0x1",
-						ToBlock:   "0x2",
-						Address:   address,
-						Topics:    []string{"notatopic"},
-					},
-				},
-			},
-		},
+	// Perform the RPC Call
+	resp, err := Call(txdata, br.Method)
+	if err != nil {
+		testMetrics = append(testMetrics, TestMetric{
+			Method:   br.Method,
+			Test:     testName,
+			Pass:     false,
+			Duration: resp.Duration,
+			Error:    err.Error(),
+			Params:   br.Params,
+		})
+		return BaseResponse{}, err
 	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-				// Add a valid filter ID to the global filterID variable
-				// so other tests can use this filter
-				createdFilterID = s
-			}
-
+	if resp.Error != nil {
+		if resp.Error.Code != expectedErrorCode {
 			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
+				Method:   br.Method,
+				Test:     testName,
+				Pass:     false,
 				Duration: resp.Duration,
-				Params:   tc.br.Params,
+				Error:    resp.Error.Message,
+				Params:   br.Params,
 			})
-
-		})
+			return BaseResponse{}, errors.New(resp.Error.Message)
+		}
 	}
-}
-
-func test_getFilterLogs(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_working_filter", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_filter_getFilterLogs,
-				Params: []interface{}{
-					createdFilterID,
-				},
-			},
-		}, {
-			name:              fmt.Sprintf("%s_missing_param", t.Name()),
-			expectedErrorCode: -32602,
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_filter_getFilterLogs,
-				Params:  []interface{}{},
-			},
-		}, {
-			name:              fmt.Sprintf("%s_filter_not_found", t.Name()),
-			expectedErrorCode: -32000,
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_filter_getFilterLogs,
-				Params: []interface{}{
-					"0x16",
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s []FilterChange
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-			}
+	// This step validates that the returned response is the correct data type
+	if resp.Result != nil {
+		err = json.Unmarshal(resp.Result, wantedDataType)
+		if err != nil {
 			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
+				Method:   br.Method,
+				Test:     testName,
+				Pass:     false,
 				Duration: resp.Duration,
-				Params:   tc.br.Params,
+				Error:    err.Error(),
+				Params:   br.Params,
 			})
-
-		})
+			return BaseResponse{}, err
+		}
 	}
-}
-
-func test_address(t *testing.T) {
-	type testcase struct {
-		name              string
-		id                string
-		offset            int
-		page              int
-		tx_view           string
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name:    fmt.Sprintf("%s_addr", t.Name()),
-			id:      address,
-			offset:  0,
-			page:    2,
-			tx_view: "ALL",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Perform the RPC Call
-			response, err := Address(tc.id, tc.offset, tc.page, tc.tx_view)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: METHOD_address,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-				})
-				t.Error(err)
-				return
-			}
-
-			// This step validates that the returned response is the correct data type
-
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   METHOD_address,
-				Test:     tc.name,
-				Duration: response.Duration,
-				Pass:     true,
-			})
-
-		})
-	}
-}
-
-func test_V2_hmy_getBalance(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_working_count", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V2_getBalance,
-				Params: []interface{}{
-					address,
-				},
-			},
-		}, {
-			name:              fmt.Sprintf("%s_missing_param", t.Name()),
-			expectedErrorCode: -32602,
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V1_getBalance,
-				Params: []interface{}{
-					address,
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s big.Int
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-			}
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-			})
-
-		})
-	}
-}
-func test_V1_hmy_getBalance(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_working_count", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V1_getBalance,
-				Params: []interface{}{
-					address,
-					"latest",
-				},
-			},
-		}, {
-			name:              fmt.Sprintf("%s_missing_param", t.Name()),
-			expectedErrorCode: -32602,
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V1_getBalance,
-				Params: []interface{}{
-					address,
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-			}
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-				Params:   tc.br.Params,
-			})
-
-		})
-	}
-}
-func test_V1_hmy_getTransactionCount(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_working_count", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V1_getTransactionCount,
-				Params: []interface{}{
-					address,
-					"latest",
-				},
-			},
-		}, {
-			name:              fmt.Sprintf("%s_missing_param", t.Name()),
-			expectedErrorCode: -32602,
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V1_getTransactionCount,
-				Params: []interface{}{
-					address,
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-			}
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-				Params:   tc.br.Params,
-			})
-
-		})
-	}
-}
-func test_V2_hmy_getTransactionCount(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_working_count", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V2_getTransactionCount,
-				Params: []interface{}{
-					address,
-					1,
-				},
-			},
-		}, {
-			name:              fmt.Sprintf("%s_missing_param", t.Name()),
-			expectedErrorCode: -32602,
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V2_getTransactionCount,
-				Params: []interface{}{
-					address,
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s big.Int
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-			}
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-				Params:   tc.br.Params,
-			})
-
-		})
-	}
-}
-
-func test_V2_getBalanceByBlockNumber(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_block_initial_balance", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V2_getBalanceByBlockNumber,
-				Params: []interface{}{
-					address,
-					"1",
-				},
-			},
-		}, {
-			name:              fmt.Sprintf("%s_missing_param", t.Name()),
-			expectedErrorCode: -32602,
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V2_getBalanceByBlockNumber,
-				Params: []interface{}{
-					address,
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-
-			if resp.Result != nil {
-				var s big.Int
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-			}
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-				Params:   tc.br.Params,
-			})
-
-		})
-	}
-}
-
-func test_V1_getBalanceByBlockNumber(t *testing.T) {
-	type testcase struct {
-		name              string
-		br                BaseRequest
-		expectedErrorCode int64
-	}
-
-	testCases := []testcase{
-		{
-			name: fmt.Sprintf("%s_getBalanceByBlcok", t.Name()),
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V1_getBalanceByBlockNumber,
-				Params: []interface{}{
-					address,
-					"0x01",
-				},
-			},
-		}, {
-			name:              fmt.Sprintf("%s_missing_param", t.Name()),
-			expectedErrorCode: -32602,
-			br: BaseRequest{
-				ID:      "1",
-				JsonRPC: "2.0",
-				Method:  METHOD_V1_getBalanceByBlockNumber,
-				Params: []interface{}{
-					address,
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-
-			if resp.Result != nil {
-				var s string
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
-
-			}
-			testMetrics = append(testMetrics, TestMetric{
-				Method:   tc.br.Method,
-				Test:     tc.name,
-				Pass:     true,
-				Duration: resp.Duration,
-				Params:   tc.br.Params,
-			})
-
-		})
-	}
+	return *resp, nil
 }

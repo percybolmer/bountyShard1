@@ -89,6 +89,66 @@ const (
 	METHOD_transaction_V1_getBlocks                           = "hmy_getBlocks"
 	METHOD_transaction_V2_getBlocks                           = "hmyv2_getBlocks"
 	METHOD_transaction_tx                                     = "tx"
+
+	/**
+	Contract related
+	*/
+	METHOD_contract_getStorageAt = "hmy_getStorageAt"
+	METHOD_contract_getCode      = "hmy_getCode"
+	METHOD_contract_call         = "hmy_call"
+	METHOD_contract_estimateGas  = "hmy_estimateGas"
+
+	/**
+	Protocol Related
+	*/
+	METHOD_protocol_isLastBlock          = "hmy_isLastBlock"
+	METHOD_protocol_epochLastBlock       = "hmy_epochLastBlock"
+	METHOD_protocol_lastestHeader        = "hmy_latestHeader"
+	METHOD_protocol_getShardingStructure = "hmy_getShardingStructure"
+	METHOD_protocol_V1_blockNumber       = "hmy_blockNumber"
+	METHOD_protocol_V2_blockNumber       = "hmyv2_blockNumber"
+	METHOD_protocol_syncing              = "hmy_syncing"
+	METHOD_protocol_V1_gasPrice          = "hmy_gasPrice"
+	METHOD_protocol_V2_gasPrice          = "hmyv2_gasPrice"
+	METHOD_protocol_peerCount            = "net_peerCount"
+	METHOD_protocol_V1_getEpoch          = "hmy_getEpoch"
+	METHOD_protocol_V2_getEpoch          = "hmyv2_getEpoch"
+	METHOD_protocol_getLeader            = "hmy_getLeader"
+
+	/**
+	Staking Related Methods
+	*/
+	METHOD_staking_getCirculatingSupply                    = "hmy_getCirculatingSupply"
+	METHOD_staking_getTotalSupply                          = "hmy_getTotalSupply"
+	METHOD_staking_getStakingNetworkInfo                   = "hmy_getStakingNetworkInfo"
+	METHOD_staking_getAllValidatorInformation              = "hmy_getAllValidatorInformation"
+	METHOD_staking_getAllValidatorInformationByBlockNumber = "hmy_getAllValidatorInformationByBlockNumber"
+	METHOD_staking_getCurrentUtilityMetrics                = "hmy_getCurrentUtilityMetrics"
+	// getDelegationsByValidator has the wrong data type in the DOCS
+	// for Undelegations, should I update or not
+	METHOD_staking_getDelegationsByValidator             = "hmy_getDelegationsByValidator"
+	METHOD_staking_getDelegationsByDelegatorAndValidator = "hmy_getDelegationsByDelegatorAndValidator"
+	METHOD_staking_getDelegationsByDelegator             = "hmy_getDelegationsByDelegator"
+	METHOD_staking_getValidatorMetrics                   = "hmy_getValidatorMetrics"
+	METHOD_staking_getMedianRawStakeSnapshot             = "hmy_getMedianRawStakeSnapshot"
+	METHOD_staking_getActiveValidatorAddresses           = "hmy_getActiveValidatorAddresses"
+	METHOD_staking_getAllValidatorAddresses              = "hmy_getAllValidatorAddresses"
+	METHOD_staking_V1_getCurrentStakingErrorSink         = "hmy_getCurrentStakingErrorSink"
+	METHOD_staking_V2_getCurrentStakingErrorSink         = "hmyv2_getCurrentStakingErrorSink"
+	METHOD_staking_getValidatorInformation               = "hmy_getValidatorInformation"
+	METHOD_staking_V1_getValidators                      = "hmy_getValidators"
+	METHOD_staking_V2_getValidators                      = "hmyv2_getValidators"
+	METHOD_staking_getSignedBlocks                       = "hmy_getSignedBlocks"
+	METHOD_staking_V1_isBlockSigner                      = "hmy_isBlockSigner"
+	METHOD_staking_V2_isBlockSigner                      = "hmyv2_isBlockSigner"
+	METHOD_staking_V1_getBlockSigners                    = "hmy_getBlockSigners"
+	METHOD_staking_V2_getBlockSigners                    = "hmyv2_getBlockSigners"
+
+	/**
+	Tracing methods
+	*/
+	METHOD_trace_block       = "trace_block"
+	METHOD_trace_transaction = "trace_transaction"
 )
 
 var (
