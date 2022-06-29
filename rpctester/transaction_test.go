@@ -4,10 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	"testing"
 )
 
-func test_V1_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
+func (ts *testSuite) test_V1_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
+	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
+	// Skip unless devnet
+	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+		t.Skip("only run staking on testnet")
+	}
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -22,7 +28,7 @@ func test_V1_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_V1_getStakingTransactionByBlockHashAndIndex,
 				Params: []interface{}{
-					"0x428ead93e632d5255ea3d1fb61b02ab8493cf562a398af2159c33ecd53c62c16",
+					ts.NetworkHeader.BlockHash,
 					"0x0",
 				},
 			},
@@ -31,63 +37,12 @@ func test_V1_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
+			var result string
 
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
+			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
+			if err != nil {
+				t.Error(err)
+				return
 			}
 
 			testMetrics = append(testMetrics, TestMetric{
@@ -102,7 +57,12 @@ func test_V1_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
 	}
 }
 
-func test_V2_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
+func (ts *testSuite) test_V2_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
+	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
+	// Skip unless devnet
+	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+		t.Skip("only run staking on testnet")
+	}
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -117,7 +77,7 @@ func test_V2_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_V2_getStakingTransactionByBlockHashAndIndex,
 				Params: []interface{}{
-					"0x428ead93e632d5255ea3d1fb61b02ab8493cf562a398af2159c33ecd53c62c16",
+					ts.NetworkHeader.BlockHash,
 					0,
 				},
 			},
@@ -126,62 +86,12 @@ func test_V2_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
+			var result string
+
+			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
 			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
 				t.Error(err)
 				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
 			}
 
 			testMetrics = append(testMetrics, TestMetric{
@@ -196,7 +106,12 @@ func test_V2_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
 	}
 }
 
-func test_V1_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
+func (ts *testSuite) test_V1_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
+	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
+	// Skip unless devnet
+	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+		t.Skip("only run staking on testnet")
+	}
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -211,7 +126,7 @@ func test_V1_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_V1_getStakingTransactionByBlockNumberAndIndex,
 				Params: []interface{}{
-					"0x4",
+					ts.NetworkHeader.BlockNumber,
 					"0x0",
 				},
 			},
@@ -220,62 +135,12 @@ func test_V1_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
+			var result string
+
+			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
 			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
 				t.Error(err)
 				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string // Wrong Data type, but func does not work
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
 			}
 
 			testMetrics = append(testMetrics, TestMetric{
@@ -290,7 +155,12 @@ func test_V1_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
 	}
 }
 
-func test_V2_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
+func (ts *testSuite) test_V2_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
+	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
+	// Skip unless devnet
+	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+		t.Skip("only run staking on testnet")
+	}
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -305,7 +175,7 @@ func test_V2_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_V2_getStakingTransactionByBlockNumberAndIndex,
 				Params: []interface{}{
-					4,
+					ts.NetworkHeader.BlockNumber,
 					1,
 				},
 			},
@@ -318,7 +188,7 @@ func test_V2_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_V2_getStakingTransactionByBlockNumberAndIndex,
 				Params: []interface{}{
-					4,
+					ts.NetworkHeader.BlockNumber,
 					0,
 				},
 			},
@@ -327,62 +197,12 @@ func test_V2_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
+			var result string
+
+			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
 			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method: tc.br.Method,
-					Test:   tc.name,
-					Pass:   false,
-					Error:  err.Error(),
-					Params: tc.br.Params,
-				})
 				t.Error(err)
 				return
-			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
-			if err != nil {
-				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
-				})
-				t.Error(err)
-				return
-			}
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string // Wrong Data type, but func does not work
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
 			}
 
 			testMetrics = append(testMetrics, TestMetric{
@@ -397,7 +217,12 @@ func test_V2_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
 	}
 }
 
-func test_V2_getStakingTransactionByHash(t *testing.T) {
+func (ts *testSuite) test_V2_getStakingTransactionByHash(t *testing.T) {
+	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
+	// Skip unless devnet
+	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+		t.Skip("only run staking on testnet")
+	}
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -412,7 +237,7 @@ func test_V2_getStakingTransactionByHash(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_V2_getStakingTransactionByHash,
 				Params: []interface{}{
-					"0x1dff358dad4d0fc95b11acc9826b190d8b7971ac26b3f7ebdee83c10cafaf86f",
+					ts.LastStakingTransactionHash,
 				},
 			},
 		},
@@ -491,7 +316,12 @@ func test_V2_getStakingTransactionByHash(t *testing.T) {
 	}
 }
 
-func test_V1_getStakingTransactionByHash(t *testing.T) {
+func (ts *testSuite) test_V1_getStakingTransactionByHash(t *testing.T) {
+	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
+	// Skip unless devnet
+	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+		t.Skip("only run staking on testnet")
+	}
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -506,7 +336,7 @@ func test_V1_getStakingTransactionByHash(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_V1_getStakingTransactionByHash,
 				Params: []interface{}{
-					"0x1dff358dad4d0fc95b11acc9826b190d8b7971ac26b3f7ebdee83c10cafaf86f",
+					ts.LastStakingTransactionHash,
 				},
 			},
 		},
@@ -1495,7 +1325,15 @@ func test_V2_pendingTransactions(t *testing.T) {
 	}
 }
 
-func test_sendRawStakingTransaction(t *testing.T) {
+func (ts *testSuite) test_sendRawStakingTransaction(t *testing.T) {
+	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
+	// Skip unless devnet
+	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+		t.Skip("only run staking on testnet")
+	}
+	if len(ts.ElectedValidators) == 0 {
+		t.Skip("cannot stake without validators")
+	}
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -1509,16 +1347,20 @@ func test_sendRawStakingTransaction(t *testing.T) {
 				ID:      "1",
 				JsonRPC: "2.0",
 				Method:  METHOD_transaction_sendRawStakingTransaction,
-				Params: []interface{}{
-					"", // Create RLP sig in the test
-				},
+				Params:  []interface{}{},
 			},
 		},
 	}
 
+	if len(ts.ValidatorsV2.Validators) == 0 {
+		t.Skip("Cant perfrom without validators")
+	}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.br)
+			// Build a Staking Transaction
+
+			payload, err := CreateStakingRLPString(address, ts.ElectedValidators[0], big.NewInt(0).Mul(ONE, big.NewInt(101)), nil)
 			if err != nil {
 				testMetrics = append(testMetrics, TestMetric{
 					Method: tc.br.Method,
@@ -1530,50 +1372,21 @@ func test_sendRawStakingTransaction(t *testing.T) {
 				t.Error(err)
 				return
 			}
-			// Perform the RPC Call
-			resp, err := Call(data, tc.br.Method)
+			tc.br.Params = append(tc.br.Params, payload)
+
+			var result string
+
+			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
 			if err != nil {
 				testMetrics = append(testMetrics, TestMetric{
-					Method:   tc.br.Method,
-					Test:     tc.name,
-					Pass:     false,
-					Duration: resp.Duration,
-					Error:    err.Error(),
-					Params:   tc.br.Params,
+					Method: tc.br.Method,
+					Test:   tc.name,
+					Pass:   false,
+					Error:  err.Error(),
+					Params: tc.br.Params,
 				})
 				t.Error(err)
 				return
-			}
-			if resp.Error != nil {
-				if resp.Error.Code != tc.expectedErrorCode {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    resp.Error.Message,
-						Params:   tc.br.Params,
-					})
-					t.Error(resp.Error.Message)
-					return
-				}
-			}
-			// This step validates that the returned response is the correct data type
-			if resp.Result != nil {
-				var s string
-				err = json.Unmarshal(resp.Result, &s)
-				if err != nil {
-					testMetrics = append(testMetrics, TestMetric{
-						Method:   tc.br.Method,
-						Test:     tc.name,
-						Pass:     false,
-						Duration: resp.Duration,
-						Error:    err.Error(),
-						Params:   tc.br.Params,
-					})
-					t.Error(err)
-					return
-				}
 			}
 
 			testMetrics = append(testMetrics, TestMetric{

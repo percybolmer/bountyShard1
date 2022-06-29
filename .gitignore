@@ -1,8 +1,10 @@
 .env
 .env-prod
 .env-dev
+.env-test
 ganache*
 build
 results.json
 internal.txt
 .vscode
+hmy

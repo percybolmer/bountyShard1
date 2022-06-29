@@ -34,5 +34,5 @@ installHarmony:
 	git clone https://github.com/harmony-one/harmony.git && \
 	cd harmony && go mod tidy && make
 
-
-	
+linuxInstallHarmony:
+	curl -LO https://harmony.one/hmycli && mv hmycli hmy && chmod +x hmy

@@ -3,10 +3,14 @@ module percybolmer/rpc-shard-testing/rpctester
 go 1.18
 
 require (
+	github.com/btcsuite/btcutil v1.0.2
 	github.com/ethereum/go-ethereum v1.10.19
+	github.com/harmony-one/bls v0.0.6
 	github.com/harmony-one/harmony v1.10.2
 	github.com/joho/godotenv v1.4.0
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v0.0.5
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 )
 
 require (
@@ -14,7 +18,6 @@ require (
 	github.com/VictoriaMetrics/fastcache v1.6.0 // indirect
 	github.com/btcsuite/btcd v0.21.0-beta // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
-	github.com/btcsuite/btcutil v1.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
@@ -24,7 +27,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/harmony-one/bls v0.0.6 // indirect
 	github.com/harmony-one/taggedrlp v0.1.4 // indirect
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
@@ -44,7 +46,6 @@ require (
 	github.com/multiformats/go-varint v0.0.6 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/tsdb v0.7.1 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/rs/zerolog v1.18.0 // indirect
@@ -55,7 +56,6 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tklauser/go-sysconf v0.3.5 // indirect
 	github.com/tklauser/numcpus v0.2.2 // indirect
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654 // indirect
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
