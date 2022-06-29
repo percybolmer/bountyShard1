@@ -5,10 +5,17 @@ import (
 	"net/http"
 )
 
-var (
+type Benchmarker struct {
 	reqs int
 	max  int
-)
+}
+
+func NewBenchmarker(requestsToSend int, maxConcurrent int) *Benchmarker {
+	return &Benchmarker{
+		reqs: requestsToSend,
+		max:  maxConcurrent,
+	}
+}
 
 type Response struct {
 	*http.Response
@@ -16,23 +23,23 @@ type Response struct {
 }
 
 // Dispatcher
-func Dispatcher(reqChan chan *http.Request, generateRequest func() *http.Request) {
+func (bm *Benchmarker) Dispatcher(reqChan chan *http.Request, generateRequest func() *http.Request) {
 	defer close(reqChan)
-	for i := 0; i < reqs; i++ {
+	for i := 0; i < bm.reqs; i++ {
 		reqChan <- generateRequest()
 	}
 }
 
 // Worker Pool
-func WorkerPool(reqChan chan *http.Request, respChan chan Response) {
+func (bm *Benchmarker) WorkerPool(reqChan chan *http.Request, respChan chan Response) {
 	t := &http.Transport{}
-	for i := 0; i < max; i++ {
-		go Worker(t, reqChan, respChan)
+	for i := 0; i < bm.max; i++ {
+		go bm.Worker(t, reqChan, respChan)
 	}
 }
 
 // Worker
-func Worker(t *http.Transport, reqChan chan *http.Request, respChan chan Response) {
+func (bm *Benchmarker) Worker(t *http.Transport, reqChan chan *http.Request, respChan chan Response) {
 	for req := range reqChan {
 		resp, err := t.RoundTrip(req)
 		r := Response{resp, err}
@@ -41,12 +48,12 @@ func Worker(t *http.Transport, reqChan chan *http.Request, respChan chan Respons
 }
 
 // Consumer
-func Consumer(respChan chan Response) (int64, int64) {
+func (bm *Benchmarker) Consumer(respChan chan Response) (int64, int64) {
 	var (
 		conns int64
 		size  int64
 	)
-	for conns < int64(reqs) {
+	for conns < int64(bm.reqs) {
 		select {
 		case r, ok := <-respChan:
 			if ok {

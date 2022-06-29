@@ -19,11 +19,6 @@ func init() {
 	rootCmd.AddCommand(stressCMD)
 }
 
-var (
-	reqs int
-	max  int
-)
-
 // BaseRequest is the base structure of requests
 type BaseRequest struct {
 	ID      string `json:"id"`
@@ -42,13 +37,12 @@ var stressCMD = &cobra.Command{
 
 func stressTest(cmd *cobra.Command, args []string) {
 
-	reqs = 1000000
-	max = 100
+	bencher := benchmarker.NewBenchmarker(100000, 100)
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	reqChan := make(chan *http.Request)
 	respChan := make(chan benchmarker.Response)
 	start := time.Now()
-	go benchmarker.Dispatcher(reqChan, func() *http.Request {
+	go bencher.Dispatcher(reqChan, func() *http.Request {
 		br := BaseRequest{
 			ID:      "1",
 			JsonRPC: "2.0",
@@ -67,8 +61,8 @@ func stressTest(cmd *cobra.Command, args []string) {
 		}
 		return req
 	})
-	go benchmarker.WorkerPool(reqChan, respChan)
-	conns, size := benchmarker.Consumer(respChan)
+	go bencher.WorkerPool(reqChan, respChan)
+	conns, size := bencher.Consumer(respChan)
 	took := time.Since(start)
 	ns := took.Nanoseconds()
 	av := ns / conns
