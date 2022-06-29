@@ -138,12 +138,23 @@ func test_getAllValidatorInformation(t *testing.T) {
 
 	testCases := []testcase{
 		{
-			name: fmt.Sprintf("%s_get_validator_information", t.Name()),
+			name: fmt.Sprintf("%s_according_to_docs", t.Name()),
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
 				Method:  METHOD_staking_getAllValidatorInformation,
 				Params:  []interface{}{},
+			},
+		},
+		{
+			name: fmt.Sprintf("%s_with_page_that_is_not_in_docs", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_staking_getAllValidatorInformation,
+				Params: []interface{}{
+					1,
+				},
 			},
 		},
 	}
@@ -185,9 +196,9 @@ func (ts *testSuite) test_getValidatorInformation(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getAllValidatorInformation,
+				Method:  METHOD_staking_getValidatorInformation,
 				Params: []interface{}{
-					ts.ValidatorsV2.Validators[0].Address,
+					Parse(ts.ValidatorsV2.Validators[0].Address),
 				},
 			},
 		},
@@ -202,6 +213,8 @@ func (ts *testSuite) test_getValidatorInformation(t *testing.T) {
 				t.Error(err)
 				return
 			}
+
+			ts.ValidatorInfo = result
 
 			testMetrics = append(testMetrics, TestMetric{
 				Method:   tc.br.Method,
@@ -524,7 +537,7 @@ func test_getMedianRawStakeSnapshot(t *testing.T) {
 	}
 }
 
-func test_getActiveValidatorAddresses(t *testing.T) {
+func (ts *testSuite) test_getActiveValidatorAddresses(t *testing.T) {
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -565,7 +578,7 @@ func test_getActiveValidatorAddresses(t *testing.T) {
 	}
 }
 
-func test_getAllValidatorAddresses(t *testing.T) {
+func test_V1_getAllValidatorAddresses(t *testing.T) {
 	type testcase struct {
 		name              string
 		br                BaseRequest
@@ -578,7 +591,48 @@ func test_getAllValidatorAddresses(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getAllValidatorAddresses,
+				Method:  METHOD_staking_V1_getAllValidatorAddresses,
+				Params:  []interface{}{},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var result []string
+
+			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func test_V2_getAllValidatorAddresses(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_V2_all_validators", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_staking_V2_getAllValidatorAddresses,
 				Params:  []interface{}{},
 			},
 		},
@@ -980,6 +1034,89 @@ func (ts *testSuite) test_V2_getBlockSigners(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var result []string
+			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V2_getAllElectedValidators(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_V2_elected_validators", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_staking_V2_getElectedValidatorAddresses,
+				Params:  []interface{}{},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var result []string
+
+			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			ts.ElectedValidators = result
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
+
+func (ts *testSuite) test_V1_getAllElectedValidators(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+	}
+
+	testCases := []testcase{
+		{
+			name: fmt.Sprintf("%s_elected_validators", t.Name()),
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  METHOD_staking_V1_getElectedValidatorAddresses,
+				Params:  []interface{}{},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var result []string
+
 			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
 			if err != nil {
 				t.Error(err)

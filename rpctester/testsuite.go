@@ -20,6 +20,13 @@ type testSuite struct {
 	NetworkHeader              NetworkHeader
 	ValidatorsV1               GetValidatorsV1
 	ValidatorsV2               GetValidatorsV2
+	ValidatorInfo              ValidatorInfo
+
+	LastStakingTransactionHash      string
+	LastStakingTransactionBlockHash string
+
+	ActiveValidators  []string
+	ElectedValidators []string
 }
 
 func (ts *testSuite) test_sendRawTransaction(t *testing.T) {

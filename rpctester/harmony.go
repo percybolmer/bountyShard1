@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/big"
+	"net"
 	"net/http"
 	"os"
 	"percybolmer/rpc-shard-testing/rpctester/contracts/devtoken"
@@ -21,11 +22,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/harmony-one/harmony/core/types"
+
+	staking "github.com/harmony-one/harmony/staking/types"
 	"github.com/joho/godotenv"
 )
 
 const (
+	/**
+	Account methods
+
+	*/
 	METHOD_V1_getBalanceByBlockNumber = "hmy_getBalanceByBlockNumber"
 	METHOD_V2_getBalanceByBlockNumber = "hmyv2_getBalanceByBlockNumber"
 	METHOD_V1_getTransactionCount     = "hmy_getTransactionCount"
@@ -65,7 +73,7 @@ const (
 	METHOD_transaction_V2_getCXReceiptByHash   = "hmyv2_getCXReceiptByHash"
 	METHOD_transaction_V1_pendingTransactions  = "hmy_pendingTransactions"
 	METHOD_transaction_V2_pendingTransactions  = "hmyv2_pendingTransactions"
-	// TODO How do I format the RawStaking Transaction?
+	// RawStaking only on DEVNET
 	METHOD_transaction_sendRawStakingTransaction              = "hmy_sendRawStakingTransaction"
 	METHOD_transaction_sendRawTransaction                     = "hmy_sendRawTransaction"
 	METHOD_transaction_V1_getTransactionHistory               = "hmy_getTransactionsHistory"
@@ -132,7 +140,8 @@ const (
 	METHOD_staking_getValidatorMetrics                   = "hmy_getValidatorMetrics"
 	METHOD_staking_getMedianRawStakeSnapshot             = "hmy_getMedianRawStakeSnapshot"
 	METHOD_staking_getActiveValidatorAddresses           = "hmy_getActiveValidatorAddresses"
-	METHOD_staking_getAllValidatorAddresses              = "hmy_getAllValidatorAddresses"
+	METHOD_staking_V1_getAllValidatorAddresses           = "hmy_getAllValidatorAddresses"
+	METHOD_staking_V2_getAllValidatorAddresses           = "hmyv2_getAllValidatorAddresses"
 	METHOD_staking_V1_getCurrentStakingErrorSink         = "hmy_getCurrentStakingErrorSink"
 	METHOD_staking_V2_getCurrentStakingErrorSink         = "hmyv2_getCurrentStakingErrorSink"
 	METHOD_staking_getValidatorInformation               = "hmy_getValidatorInformation"
@@ -143,7 +152,8 @@ const (
 	METHOD_staking_V2_isBlockSigner                      = "hmyv2_isBlockSigner"
 	METHOD_staking_V1_getBlockSigners                    = "hmy_getBlockSigners"
 	METHOD_staking_V2_getBlockSigners                    = "hmyv2_getBlockSigners"
-
+	METHOD_staking_V1_getElectedValidatorAddresses       = "hmy_getElectedValidatorAddresses"
+	METHOD_staking_V2_getElectedValidatorAddresses       = "hmyv2_getElectedValidatorAddresses"
 	/**
 	Tracing methods
 	*/
@@ -154,6 +164,7 @@ const (
 var (
 	httpClient    *http.Client
 	testMetrics   []TestMetric
+	benchMetrics  map[string][]TestMetric
 	ethClient     *ethclient.Client
 	auth          *bind.TransactOpts
 	deployedToken *devtoken.Devtoken
@@ -168,8 +179,15 @@ var (
 
 func init() {
 	// Dont like global http Client, but in this case it might make somewhat sense since we only want to test
-	httpClient = &http.Client{Timeout: time.Duration(5) * time.Second}
+	httpClient = &http.Client{Timeout: time.Duration(5) * time.Second, Transport: &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}}
 	testMetrics = []TestMetric{}
+	benchMetrics = map[string][]TestMetric{}
 
 	ONE = big.NewInt(1000000000000000000)
 
@@ -183,6 +201,10 @@ func init() {
 	} else if environment == "dev" {
 		if err := godotenv.Load(".env-dev"); err != nil {
 			log.Fatal("Error loading .env-dev file")
+		}
+	} else if environment == "test" {
+		if err := godotenv.Load(".env-test"); err != nil {
+			log.Fatal("Error loading .env-test file")
 		}
 	} else {
 		if err := godotenv.Load(".env"); err != nil {
@@ -274,6 +296,49 @@ func GenerateReport() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// BenchmarkCall will trigger a request with a payload to the RPC method given and marshal response into interface
+// Differs from Call on that it will create a standalone http client
+func BenchmarkCall(payload []byte, method string) (*BaseResponse, error) {
+	// Store request time in Response
+
+	localClient := &http.Client{Timeout: time.Duration(5) * time.Second, Transport: &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}}
+
+	start := time.Now()
+	resp, err := localClient.Post(fmt.Sprintf("%s", url), "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+	duration := time.Since(start)
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
+	}
+	// Read data
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var br BaseResponse
+	err = json.Unmarshal(body, &br)
+	if err != nil {
+		return nil, err
+	}
+	// Add Extra metrics
+	br.Duration = duration.String()
+	br.Method = method
+
+	return &br, nil
 }
 
 // Call will trigger a request with a payload to the RPC method given and marshal response into interface
@@ -396,4 +461,58 @@ func CreateRLPString(to common.Address, from common.Address, amount big.Int, dat
 
 	rawTxHex := hexutil.Encode(ts.GetRlp(0))
 	return rawTxHex, nil
+}
+
+// CreateStakingRLPString is a wrapper to help with generating RLP for staking requests
+// delgator and validator is sent as ONE accounts format ie bech32
+// addr
+func CreateStakingRLPString(delegator string, validator string, amount *big.Int, data []byte) (string, error) {
+	nonce, err := ethClient.PendingNonceAt(context.Background(), common.HexToAddress(address))
+	if err != nil {
+		return "", err
+	}
+
+	gasPrice, err := ethClient.SuggestGasPrice(context.Background())
+	if err != nil {
+		return "", err
+	}
+	selectedGasLimit := auth.GasLimit
+
+	// Create sTAKING TX with Harmony Flavor
+	delegateStakePayloadMaker := func() (staking.Directive, interface{}) {
+		return staking.DirectiveDelegate, staking.Delegate{
+			Parse(delegator),
+			Parse(validator),
+			amount,
+		}
+
+	}
+	_, payload := delegateStakePayloadMaker()
+
+	data, err = rlp.EncodeToBytes(payload)
+	if err != nil {
+		return "", err
+	}
+
+	stakingTx, err := staking.NewStakingTransaction(nonce, selectedGasLimit, gasPrice, delegateStakePayloadMaker)
+
+	// Currently Bugged on Testnet & Devnet REturns ChainiD 16777....?
+	// Trnasaciton needs 4 or 2
+	// chainID, err := ethClient.ChainID(context.Background())
+	// if err != nil {
+	// 	return "", err
+	// }
+	// HardCode to 2 for now
+	signedTx, err := staking.Sign(stakingTx, staking.NewEIP155Signer(big.NewInt(2)), crypto.GetPrivateKey())
+	if err != nil {
+		return "", err
+	}
+
+	enc, err := rlp.EncodeToBytes(signedTx)
+	if err != nil {
+		return "", err
+	}
+	hexSignature := hexutil.Encode(enc)
+
+	return hexSignature, nil
 }

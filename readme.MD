@@ -13,6 +13,7 @@ There are three major requirements
 * Go
 * Geth 
 * Solc
+* hmy cli
 
 
 You can install all requirements using `make installRequirements`
@@ -75,6 +76,16 @@ export LIBRARY_PATH=$LD_LIBRARY_PATH
 export DYLD_FALLBACK_LIBRARY_PATH=$LD_LIBRARY_PATH
 ```
 
+If you have trouble installing harmony CLI try 
+https://docs.harmony.one/home/network/validators/node-setup/hmy-cli-download
+
+and 
+
+```bash
+curl -LO https://harmony.one/hmycli && mv hmycli hmy && chmod +x hmy
+./hmy
+```
+
 ## Setup of Environments variables
 In the repository you can find a file named `rpctester/example.env`, in it 
 there is a few environment variables needed. 
@@ -99,17 +110,34 @@ and private key.
 Set the environment variable `RPCTESTER_ENVIRONMENT` = "production" to use the `.env-prod`
 Set it to = `dev` to use `.env-dev`
 
+1. Mainnet = [https://api.s1.t.hmny.io, https://api.s0.t.hmny.io] - `.env-prod`
+2. Testnet = [https://api.s0.b.hmny.io/, https://api.s0.pops.one/] - `.env-test`
+3. Devnet = [https://api.s0.ps.hmny.io/] - `.env-dev`
+
+Environment var to decide network 
+`RPCTESTER_ENVIRONMENT`
+
+Value to use
+1. Mainnet = "production"
+2. Testnet = "test"
+3. Devnet = "dev"
+4. Localhost = ""
+
 ## Compiling solidity contracts
 This requires Solc installed
 
 ```bash
-solc --abi contracts/Counter.sol -o build
-solc --bin contracts/Counter.sol -o build
-abigen --abi=./build/Counter.abi --bin=./build/Counter.bin --pkg=counter --out=rpctester/contracts/counter/Counter.go
+solc --abi contracts/DevToken.sol -o build
+solc --bin contracts/DevToken.sol -o build
+abigen --abi=./build/DevToken.abi --bin=./build/DevToken.bin --pkg=devtoken --out=rpctester/contracts/devtoken/DevToken.go
 
 ```
 
 ## Running tests
+Make sure you have configured according to the `Setup of Environments variables` chapter.  
+Also you will need BLS keys generated for signing Staking Transactions.
+
+
 To run the tests you will use the std Go tooling.
 
 Make sure you have started the localnet or configure the network you want using the flags explained below.
@@ -140,3 +168,16 @@ ganache-cli -f http://localhost:9500 --networkId 1666700000
 ganache-cli -f https://api.s0.b.hmny.io --networkId 1666700000
 ganache-cli -f https://api.s1.t.hmny.io --networkId 1666600000
 ```
+
+
+## Known Issues
+
+### Bad data types
+Some endpoints fails due to given the wrong data types, etc documentation says Number but it returns String.
+### Hard coded ChainID which does not match NetworkID given
+When querying for ChainID it ```1666900000``` for devnet.
+But the Github Code for Harmony is hardcoded to...4?
+https://github.com/harmony-one/go-sdk/blob/master/pkg/common/chain-id.go#L48  
+
+`error(*errors.errorString) *{s: "blockchain chain id:4, given 1666900000: invalid chain id for signer"}`
+When sending RawStakingTransactions I am using chainID 4 for that reason...

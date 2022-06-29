@@ -32,10 +32,12 @@ func Test_RPC_Sanity(t *testing.T) {
 
 // test_TransactionMethods is used to generate transactions and verify their data on the RPC
 func test_TransactionMethods(t *testing.T) {
+	// Begin by finding Elected Validators
+	t.Run("electedValidators_V1", ts.test_V2_getAllElectedValidators)
 	// Begin by sending Transaction so we can get transaction hashes to use
 	t.Run("sendRawTransaction", ts.test_sendRawTransaction)
-	// TODO confirm how to
-	//t.Run("sendRawStakingTransaction", test_sendRawStakingTransaction)
+	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
+	t.Run("sendRawStakingTransaction", ts.test_sendRawStakingTransaction)
 
 	t.Run("getCurrentTransactionErrorSink_V1", test_V1_getCurrentTransactionErrorSink)
 	t.Run("getCurrentTransactionErrorSink_V2", test_V2_getCurrentTransactionErrorSink)
@@ -49,16 +51,12 @@ func test_TransactionMethods(t *testing.T) {
 	t.Run("getPendingTransaction_V2", test_V2_pendingTransactions)
 	t.Log("Giving the network some time to congest transactions sent")
 	time.Sleep(10 * time.Second)
-	// Staking Transaction checks disabled until Stking Transaction Solved
-	// Example in GO SDK
-	// https://github.dev/harmony-one/go-sdk/blob/master/cmd/subcommands/staking.go
-	// Need BLS keys https://docs.harmony.one/home/network/validators/node-setup/generating-a-bls-key
-	// t.Run("getStakingTransactionByBlockHashAndIndex", test_V1_getStakingTransactionByBlockHashAndIndex)
-	// t.Run("getStakingTransactionByBlockHasAndIndex_V2", test_V2_getStakingTransactionByBlockHashAndIndex)
-	// t.Run("getStakingTransactionByBlockNumberAndIndex", test_V1_getStakingTransactionByBlockNumberAndIndex)
-	// t.Run("getStakingTransactionByBlockNumberAndIndex_V2", test_V2_getStakingTransactionByBlockNumberAndIndex)
-	// t.Run("getStakingTransactionByHash_V1", test_V1_getStakingTransactionByHash)
-	// t.Run("getStakingTransactionByHash_V2", test_V2_getStakingTransactionByHash)
+	t.Run("getStakingTransactionByBlockHashAndIndex", ts.test_V1_getStakingTransactionByBlockHashAndIndex)
+	t.Run("getStakingTransactionByBlockHasAndIndex_V2", ts.test_V2_getStakingTransactionByBlockHashAndIndex)
+	t.Run("getStakingTransactionByBlockNumberAndIndex", ts.test_V1_getStakingTransactionByBlockNumberAndIndex)
+	t.Run("getStakingTransactionByBlockNumberAndIndex_V2", ts.test_V2_getStakingTransactionByBlockNumberAndIndex)
+	t.Run("getStakingTransactionByHash_V1", ts.test_V1_getStakingTransactionByHash)
+	t.Run("getStakingTransactionByHash_V2", ts.test_V2_getStakingTransactionByHash)
 	t.Run("getTransactionHistory_V1", ts.test_V1_getTransactionHistory)
 	t.Run("getTransactionHistory_V2", ts.test_V2_getTransactionHistory)
 	t.Run("getTransactionReceipt_V1", ts.test_V1_getTransactionReceipt)
@@ -155,8 +153,9 @@ func test_StakingMethods(t *testing.T) {
 	t.Run("getDelegationsByDelegator", ts.test_getDelegationsByDelegator)
 	t.Run("getValidatorMetrics", ts.test_getValidatorMetrics)
 	t.Run("medianSnapshot", test_getMedianRawStakeSnapshot)
-	t.Run("getActiveValidatorAddresses", test_getActiveValidatorAddresses)
-	t.Run("getAllValidatorAddresses", test_getAllValidatorAddresses)
+	t.Run("getActiveValidatorAddresses", ts.test_getActiveValidatorAddresses)
+	t.Run("getAllValidatorAddresses_V1", test_V1_getAllValidatorAddresses)
+	t.Run("getAllValidatorAddresses_V2", test_V2_getAllValidatorAddresses)
 	t.Run("getCurrentStakingErrorSink_V1", test_V1_getCurrentStakingErrorSink)
 	t.Run("getCurrentStakingErrorSink_V2", test_V2_getCurrentStakingErrorSink)
 	t.Run("getValidatorInformation", ts.test_getValidatorInformation)
@@ -223,5 +222,68 @@ func callAndValidateDataType(t *testing.T, testName string, expectedErrorCode in
 			return BaseResponse{}, err
 		}
 	}
+	return *resp, nil
+}
+
+// benchmarkCall is a helper that calls the request, and marshals into wanted data type and calls it
+func benchmarkCall(testName string, br BaseRequest, wantedDataType interface{}) (BaseResponse, error) {
+	// Marshal request
+	txdata, err := json.Marshal(br)
+	if err != nil {
+		benchMetrics[br.Method] = append(benchMetrics[br.Method], TestMetric{
+			Method: br.Method,
+			Test:   testName,
+			Pass:   false,
+			Error:  err.Error(),
+			Params: br.Params,
+		})
+		return BaseResponse{}, err
+	}
+	// Perform the RPC Call
+	resp, err := BenchmarkCall(txdata, br.Method)
+	if err != nil {
+		benchMetrics[br.Method] = append(benchMetrics[br.Method], TestMetric{
+			Method:   br.Method,
+			Test:     testName,
+			Pass:     false,
+			Duration: resp.Duration,
+			Error:    err.Error(),
+			Params:   br.Params,
+		})
+		return BaseResponse{}, err
+	}
+	if resp.Error != nil {
+		benchMetrics[br.Method] = append(benchMetrics[br.Method], TestMetric{
+			Method:   br.Method,
+			Test:     testName,
+			Pass:     false,
+			Duration: resp.Duration,
+			Error:    resp.Error.Message,
+			Params:   br.Params,
+		})
+		return BaseResponse{}, errors.New(resp.Error.Message)
+	}
+	// This step validates that the returned response is the correct data type
+	if resp.Result != nil {
+		err = json.Unmarshal(resp.Result, wantedDataType)
+		if err != nil {
+			benchMetrics[br.Method] = append(benchMetrics[br.Method], TestMetric{
+				Method:   br.Method,
+				Test:     testName,
+				Pass:     false,
+				Duration: resp.Duration,
+				Error:    err.Error(),
+				Params:   br.Params,
+			})
+			return BaseResponse{}, err
+		}
+	}
+	benchMetrics[br.Method] = append(benchMetrics[br.Method], TestMetric{
+		Method:   br.Method,
+		Test:     testName,
+		Pass:     true,
+		Duration: resp.Duration,
+		Params:   br.Params,
+	})
 	return *resp, nil
 }
