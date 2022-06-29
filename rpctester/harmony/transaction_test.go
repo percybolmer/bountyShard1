@@ -1,17 +1,18 @@
-package main
+package harmony
 
 import (
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
+	"percybolmer/rpc-shard-testing/rpctester/methods"
 	"testing"
 )
 
 func (ts *testSuite) test_V1_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
 	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
 	// Skip unless devnet
-	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+	if URL != "https://api.s0.b.hmny.io/" && URL != "https://api.s0.pops.one/" {
 		t.Skip("only run staking on testnet")
 	}
 	type testcase struct {
@@ -26,7 +27,7 @@ func (ts *testSuite) test_V1_getStakingTransactionByBlockHashAndIndex(t *testing
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getStakingTransactionByBlockHashAndIndex,
+				Method:  methods.METHOD_transaction_V1_getStakingTransactionByBlockHashAndIndex,
 				Params: []interface{}{
 					ts.NetworkHeader.BlockHash,
 					"0x0",
@@ -60,7 +61,7 @@ func (ts *testSuite) test_V1_getStakingTransactionByBlockHashAndIndex(t *testing
 func (ts *testSuite) test_V2_getStakingTransactionByBlockHashAndIndex(t *testing.T) {
 	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
 	// Skip unless devnet
-	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+	if URL != "https://api.s0.b.hmny.io/" && URL != "https://api.s0.pops.one/" {
 		t.Skip("only run staking on testnet")
 	}
 	type testcase struct {
@@ -75,7 +76,7 @@ func (ts *testSuite) test_V2_getStakingTransactionByBlockHashAndIndex(t *testing
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getStakingTransactionByBlockHashAndIndex,
+				Method:  methods.METHOD_transaction_V2_getStakingTransactionByBlockHashAndIndex,
 				Params: []interface{}{
 					ts.NetworkHeader.BlockHash,
 					0,
@@ -109,7 +110,7 @@ func (ts *testSuite) test_V2_getStakingTransactionByBlockHashAndIndex(t *testing
 func (ts *testSuite) test_V1_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
 	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
 	// Skip unless devnet
-	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+	if URL != "https://api.s0.b.hmny.io/" && URL != "https://api.s0.pops.one/" {
 		t.Skip("only run staking on testnet")
 	}
 	type testcase struct {
@@ -124,7 +125,7 @@ func (ts *testSuite) test_V1_getStakingTransactionByBlockNumberAndIndex(t *testi
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getStakingTransactionByBlockNumberAndIndex,
+				Method:  methods.METHOD_transaction_V1_getStakingTransactionByBlockNumberAndIndex,
 				Params: []interface{}{
 					ts.NetworkHeader.BlockNumber,
 					"0x0",
@@ -158,7 +159,7 @@ func (ts *testSuite) test_V1_getStakingTransactionByBlockNumberAndIndex(t *testi
 func (ts *testSuite) test_V2_getStakingTransactionByBlockNumberAndIndex(t *testing.T) {
 	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
 	// Skip unless devnet
-	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+	if URL != "https://api.s0.b.hmny.io/" && URL != "https://api.s0.pops.one/" {
 		t.Skip("only run staking on testnet")
 	}
 	type testcase struct {
@@ -173,7 +174,7 @@ func (ts *testSuite) test_V2_getStakingTransactionByBlockNumberAndIndex(t *testi
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getStakingTransactionByBlockNumberAndIndex,
+				Method:  methods.METHOD_transaction_V2_getStakingTransactionByBlockNumberAndIndex,
 				Params: []interface{}{
 					ts.NetworkHeader.BlockNumber,
 					1,
@@ -186,7 +187,7 @@ func (ts *testSuite) test_V2_getStakingTransactionByBlockNumberAndIndex(t *testi
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getStakingTransactionByBlockNumberAndIndex,
+				Method:  methods.METHOD_transaction_V2_getStakingTransactionByBlockNumberAndIndex,
 				Params: []interface{}{
 					ts.NetworkHeader.BlockNumber,
 					0,
@@ -220,7 +221,7 @@ func (ts *testSuite) test_V2_getStakingTransactionByBlockNumberAndIndex(t *testi
 func (ts *testSuite) test_V2_getStakingTransactionByHash(t *testing.T) {
 	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
 	// Skip unless devnet
-	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+	if URL != "https://api.s0.b.hmny.io/" && URL != "https://api.s0.pops.one/" {
 		t.Skip("only run staking on testnet")
 	}
 	type testcase struct {
@@ -235,7 +236,7 @@ func (ts *testSuite) test_V2_getStakingTransactionByHash(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getStakingTransactionByHash,
+				Method:  methods.METHOD_transaction_V2_getStakingTransactionByHash,
 				Params: []interface{}{
 					ts.LastStakingTransactionHash,
 				},
@@ -319,7 +320,7 @@ func (ts *testSuite) test_V2_getStakingTransactionByHash(t *testing.T) {
 func (ts *testSuite) test_V1_getStakingTransactionByHash(t *testing.T) {
 	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
 	// Skip unless devnet
-	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+	if URL != "https://api.s0.b.hmny.io/" && URL != "https://api.s0.pops.one/" {
 		t.Skip("only run staking on testnet")
 	}
 	type testcase struct {
@@ -334,7 +335,7 @@ func (ts *testSuite) test_V1_getStakingTransactionByHash(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getStakingTransactionByHash,
+				Method:  methods.METHOD_transaction_V1_getStakingTransactionByHash,
 				Params: []interface{}{
 					ts.LastStakingTransactionHash,
 				},
@@ -427,7 +428,7 @@ func test_V1_getCurrentTransactionErrorSink(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getCurrentTransactionErrorSink,
+				Method:  methods.METHOD_transaction_V1_getCurrentTransactionErrorSink,
 				Params:  []interface{}{},
 			},
 		},
@@ -518,7 +519,7 @@ func test_V2_getCurrentTransactionErrorSink(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getCurrentTransactionErrorSink,
+				Method:  methods.METHOD_transaction_V2_getCurrentTransactionErrorSink,
 				Params:  []interface{}{},
 			},
 		},
@@ -609,7 +610,7 @@ func test_V1_getPendingCrossLinks(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getPendingCrossLinks,
+				Method:  methods.METHOD_transaction_V1_getPendingCrossLinks,
 				Params:  []interface{}{},
 			},
 		},
@@ -700,7 +701,7 @@ func test_V2_getPendingCrossLinks(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getPendingCrossLinks,
+				Method:  methods.METHOD_transaction_V2_getPendingCrossLinks,
 				Params:  []interface{}{},
 			},
 		},
@@ -791,7 +792,7 @@ func test_V1_getPendingCXReceipts(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getPendingCXReceipts,
+				Method:  methods.METHOD_transaction_V1_getPendingCXReceipts,
 				Params:  []interface{}{},
 			},
 		},
@@ -881,7 +882,7 @@ func test_V2_getPendingCXReceipts(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getPendingCXReceipts,
+				Method:  methods.METHOD_transaction_V2_getPendingCXReceipts,
 				Params:  []interface{}{},
 			},
 		},
@@ -972,7 +973,7 @@ func test_V1_getCXReceiptByHash(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getCXReceiptByHash,
+				Method:  methods.METHOD_transaction_V1_getCXReceiptByHash,
 				Params: []interface{}{
 					"0x6b106dc5619c86b6c0cb64b17e5c464e8008e08cf0f1bb0e3fa2657fb42daade",
 				},
@@ -1064,7 +1065,7 @@ func test_V2_getCXReceiptByHash(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getCXReceiptByHash,
+				Method:  methods.METHOD_transaction_V2_getCXReceiptByHash,
 				Params: []interface{}{
 					"0x6b106dc5619c86b6c0cb64b17e5c464e8008e08cf0f1bb0e3fa2657fb42daade",
 				},
@@ -1157,7 +1158,7 @@ func test_V1_pendingTransactions(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_pendingTransactions,
+				Method:  methods.METHOD_transaction_V1_pendingTransactions,
 				Params:  []interface{}{},
 			},
 		},
@@ -1247,7 +1248,7 @@ func test_V2_pendingTransactions(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_pendingTransactions,
+				Method:  methods.METHOD_transaction_V2_pendingTransactions,
 				Params:  []interface{}{},
 			},
 		},
@@ -1328,7 +1329,7 @@ func test_V2_pendingTransactions(t *testing.T) {
 func (ts *testSuite) test_sendRawStakingTransaction(t *testing.T) {
 	// https://github.com/harmony-one/bounties/issues/117#issuecomment-1170274370
 	// Skip unless devnet
-	if url != "https://api.s0.b.hmny.io/" && url != "https://api.s0.pops.one/" {
+	if URL != "https://api.s0.b.hmny.io/" && URL != "https://api.s0.pops.one/" {
 		t.Skip("only run staking on testnet")
 	}
 	if len(ts.ElectedValidators) == 0 {
@@ -1346,7 +1347,7 @@ func (ts *testSuite) test_sendRawStakingTransaction(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_sendRawStakingTransaction,
+				Method:  methods.METHOD_transaction_sendRawStakingTransaction,
 				Params:  []interface{}{},
 			},
 		},
@@ -1414,7 +1415,7 @@ func (ts *testSuite) test_V1_getTransactionHistory(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getTransactionHistory,
+				Method:  methods.METHOD_transaction_V1_getTransactionHistory,
 				Params: []interface{}{
 					TransactionArguments{
 						Address:   address,
@@ -1531,7 +1532,7 @@ func (ts *testSuite) test_V2_getTransactionHistory(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getTransactionHistory,
+				Method:  methods.METHOD_transaction_V2_getTransactionHistory,
 				Params: []interface{}{
 					TransactionArguments{
 						Address:   address,
@@ -1549,7 +1550,7 @@ func (ts *testSuite) test_V2_getTransactionHistory(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getTransactionHistory,
+				Method:  methods.METHOD_transaction_V2_getTransactionHistory,
 				Params: []interface{}{
 					address,
 				},
@@ -1661,7 +1662,7 @@ func (ts *testSuite) test_V1_getTransactionReceipt(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getTransactionReceipt,
+				Method:  methods.METHOD_transaction_V1_getTransactionReceipt,
 				Params: []interface{}{
 					ts.LastTransactionHash,
 				},
@@ -1756,7 +1757,7 @@ func (ts *testSuite) test_V2_getTransactionReceipt(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getTransactionReceipt,
+				Method:  methods.METHOD_transaction_V2_getTransactionReceipt,
 				Params: []interface{}{
 					ts.LastTransactionHash,
 				},
@@ -1853,7 +1854,7 @@ func (ts *testSuite) test_V1_getBlockTransactionCountByHash(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getBlockTransactionCountByHash,
+				Method:  methods.METHOD_transaction_V1_getBlockTransactionCountByHash,
 				Params: []interface{}{
 					ts.LastTransactionHash,
 				},
@@ -1946,7 +1947,7 @@ func (ts *testSuite) test_V2_getBlockTransactionCountByHash(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getBlockTransactionCountByHash,
+				Method:  methods.METHOD_transaction_V2_getBlockTransactionCountByHash,
 				Params: []interface{}{
 					ts.LastTransactionHash,
 				},
@@ -2039,7 +2040,7 @@ func (ts *testSuite) test_V1_getBlockTransactionCountByNumber(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getBlockTransactionCountByNumber,
+				Method:  methods.METHOD_transaction_V1_getBlockTransactionCountByNumber,
 				Params: []interface{}{
 					ts.LastTransactionBlockNumber,
 				},
@@ -2132,7 +2133,7 @@ func (ts *testSuite) test_V2_getBlockTransactionCountByNumber(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getBlockTransactionCountByNumber,
+				Method:  methods.METHOD_transaction_V2_getBlockTransactionCountByNumber,
 				Params: []interface{}{
 					ts.LastTransactionBlockNumber,
 				},
@@ -2225,7 +2226,7 @@ func (ts *testSuite) test_V1_getTransactionByHash(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getTransactionByHash,
+				Method:  methods.METHOD_transaction_V1_getTransactionByHash,
 				Params: []interface{}{
 					ts.LastTransactionHash,
 				},
@@ -2318,7 +2319,7 @@ func (ts *testSuite) test_V2_getTransactionByHash(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getTransactionByHash,
+				Method:  methods.METHOD_transaction_V2_getTransactionByHash,
 				Params: []interface{}{
 					ts.LastTransactionHash,
 				},
@@ -2411,7 +2412,7 @@ func (ts *testSuite) test_V1_getTransactionByBlockNumberAndIndex(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getTransactionByBlockNumberAndIndex,
+				Method:  methods.METHOD_transaction_V1_getTransactionByBlockNumberAndIndex,
 				Params: []interface{}{
 					ts.LastTransactionReceiptV1.BlockNumber,
 					ts.LastTransactionReceiptV1.TransactionIndex,
@@ -2504,7 +2505,7 @@ func (ts *testSuite) test_V2_getTransactionByBlockNumberAndIndex(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getTransactionByBlockNumberAndIndex,
+				Method:  methods.METHOD_transaction_V2_getTransactionByBlockNumberAndIndex,
 				Params: []interface{}{
 					ts.LastTransactionReceiptV2.BlockNumber,
 					ts.LastTransactionReceiptV2.TransactionIndex,
@@ -2598,7 +2599,7 @@ func (ts *testSuite) test_V1_getTransactionByBlockHashAndIndex(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getTransactionByBlockHashAndIndex,
+				Method:  methods.METHOD_transaction_V1_getTransactionByBlockHashAndIndex,
 				Params: []interface{}{
 					ts.LastTransactionReceiptV1.BlockHash,
 					ts.LastTransactionReceiptV1.TransactionIndex,
@@ -2692,7 +2693,7 @@ func (ts *testSuite) test_V2_getTransactionByBlockHashAndIndex(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getTransactionByBlockHashAndIndex,
+				Method:  methods.METHOD_transaction_V2_getTransactionByBlockHashAndIndex,
 				Params: []interface{}{
 					ts.LastTransactionReceiptV2.BlockHash,
 					ts.LastTransactionReceiptV2.TransactionIndex,
@@ -2786,7 +2787,7 @@ func (ts *testSuite) test_V1_getBlockByNumber(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getBlockByNumber,
+				Method:  methods.METHOD_transaction_V1_getBlockByNumber,
 				Params: []interface{}{
 					ts.LastTransactionReceiptV1.BlockNumber,
 					true,
@@ -2886,7 +2887,7 @@ func (ts *testSuite) test_V2_getBlockByNumber(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getBlockByNumber,
+				Method:  methods.METHOD_transaction_V2_getBlockByNumber,
 				Params: []interface{}{
 					ts.LastTransactionReceiptV2.BlockNumber,
 					include{
@@ -2984,7 +2985,7 @@ func (ts *testSuite) test_V1_getBlockByHash(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getBlockByHash,
+				Method:  methods.METHOD_transaction_V1_getBlockByHash,
 				Params: []interface{}{
 					ts.LastTransactionReceiptV1.BlockHash,
 					true,
@@ -3084,7 +3085,7 @@ func (ts *testSuite) test_V2_getBlockByHash(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getBlockByHash,
+				Method:  methods.METHOD_transaction_V2_getBlockByHash,
 				Params: []interface{}{
 					ts.LastTransactionReceiptV2.BlockHash,
 					include{
@@ -3182,7 +3183,7 @@ func (ts *testSuite) test_V1_getBlocks(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V1_getBlocks,
+				Method:  methods.METHOD_transaction_V1_getBlocks,
 				Params: []interface{}{
 					ts.LastTransactionReceiptV1.BlockNumber,
 					ts.LastTransactionReceiptV1.BlockNumber,
@@ -3282,7 +3283,7 @@ func (ts *testSuite) test_V2_getBlocks(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_V2_getBlocks,
+				Method:  methods.METHOD_transaction_V2_getBlocks,
 				Params: []interface{}{
 					ts.LastTransactionReceiptV2.BlockNumber,
 					ts.LastTransactionReceiptV2.BlockNumber,
@@ -3381,7 +3382,7 @@ func (ts *testSuite) test_tx(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_tx,
+				Method:  methods.METHOD_transaction_tx,
 				Params: []interface{}{
 					ts.LastTransactionHash,
 				},

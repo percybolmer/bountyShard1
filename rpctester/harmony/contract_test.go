@@ -1,8 +1,9 @@
-package main
+package harmony
 
 import (
 	"encoding/json"
 	"fmt"
+	"percybolmer/rpc-shard-testing/rpctester/methods"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -39,7 +40,7 @@ func test_EstimateGas(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_contract_estimateGas,
+				Method:  methods.METHOD_contract_estimateGas,
 				Params:  []interface{}{},
 			},
 		},
@@ -136,7 +137,7 @@ func test_getStorageAt(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_contract_getStorageAt,
+				Method:  methods.METHOD_contract_getStorageAt,
 				Params: []interface{}{
 					smartContractAddress,
 					"0x0", // Should be totalSupply
@@ -250,7 +251,7 @@ func test_call(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_contract_call,
+				Method:  methods.METHOD_contract_call,
 				Params:  []interface{}{},
 			},
 		},
@@ -362,7 +363,7 @@ func test_getCode(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_contract_getCode,
+				Method:  methods.METHOD_contract_getCode,
 				Params: []interface{}{
 					smartContractAddress,
 					"latest",

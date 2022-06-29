@@ -1,4 +1,4 @@
-package main
+package harmony
 
 import (
 	"encoding/json"
@@ -222,68 +222,5 @@ func callAndValidateDataType(t *testing.T, testName string, expectedErrorCode in
 			return BaseResponse{}, err
 		}
 	}
-	return *resp, nil
-}
-
-// benchmarkCall is a helper that calls the request, and marshals into wanted data type and calls it
-func benchmarkCall(testName string, br BaseRequest, wantedDataType interface{}) (BaseResponse, error) {
-	// Marshal request
-	txdata, err := json.Marshal(br)
-	if err != nil {
-		benchMetrics[br.Method] = append(benchMetrics[br.Method], TestMetric{
-			Method: br.Method,
-			Test:   testName,
-			Pass:   false,
-			Error:  err.Error(),
-			Params: br.Params,
-		})
-		return BaseResponse{}, err
-	}
-	// Perform the RPC Call
-	resp, err := BenchmarkCall(txdata, br.Method)
-	if err != nil {
-		benchMetrics[br.Method] = append(benchMetrics[br.Method], TestMetric{
-			Method:   br.Method,
-			Test:     testName,
-			Pass:     false,
-			Duration: resp.Duration,
-			Error:    err.Error(),
-			Params:   br.Params,
-		})
-		return BaseResponse{}, err
-	}
-	if resp.Error != nil {
-		benchMetrics[br.Method] = append(benchMetrics[br.Method], TestMetric{
-			Method:   br.Method,
-			Test:     testName,
-			Pass:     false,
-			Duration: resp.Duration,
-			Error:    resp.Error.Message,
-			Params:   br.Params,
-		})
-		return BaseResponse{}, errors.New(resp.Error.Message)
-	}
-	// This step validates that the returned response is the correct data type
-	if resp.Result != nil {
-		err = json.Unmarshal(resp.Result, wantedDataType)
-		if err != nil {
-			benchMetrics[br.Method] = append(benchMetrics[br.Method], TestMetric{
-				Method:   br.Method,
-				Test:     testName,
-				Pass:     false,
-				Duration: resp.Duration,
-				Error:    err.Error(),
-				Params:   br.Params,
-			})
-			return BaseResponse{}, err
-		}
-	}
-	benchMetrics[br.Method] = append(benchMetrics[br.Method], TestMetric{
-		Method:   br.Method,
-		Test:     testName,
-		Pass:     true,
-		Duration: resp.Duration,
-		Params:   br.Params,
-	})
 	return *resp, nil
 }

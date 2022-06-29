@@ -14,7 +14,7 @@ Make sure you take the address from the deployed smart contract into the `.env` 
 in the `SMART_CONTRACT_ADDRESS` variabel
 
 ```
-go test -v
+cd harmony && go test -v
 ```
 
 It will run tests and generate a report in a file named `results.json`
