@@ -1,5 +1,5 @@
 // utils for converting ONE to addr
-package main
+package harmony
 
 import (
 	"github.com/btcsuite/btcutil/bech32"

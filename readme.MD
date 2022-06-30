@@ -160,7 +160,38 @@ go test --address="your adr" --url="networkurl"
 ## Test results
 Test results are printed in a `results.json` file inside the rpctester folder.
 
+## Benchmarking / Stressing
+You can use the command `stress` to stresstest endpoints.  
+It will send concurrent requests to the endpoint measureing failures and duration to calculate an average.
 
+There are two parameters to give it 
+`-c` - Concurrent requests to send, increase to further stress the Endpoint
+`-r` - Total amount of requests to send
+
+Example execution
+to send 100 concurrent requests and 10000 requests to each endpoint
+```bash
+cd rpctester
+go build -o rpctester
+./rpctester stress -c=100 -r=10000 
+```
+
+## Benchmarking Results
+Results are outputted to a JSON file containg information about each endpoint.
+
+```json
+{
+    "addressUsed": "0xfc61332CC9CdFDfCba598131595C96F8C33CE209",
+    "network": "https://api.s0.ps.hmny.io/",
+    "Methods": {
+        "hmy_blockNumber": {
+            "Average": "585.761232ms",
+            "Responses": 10,
+            "Failures": 0
+        },
+    }
+
+```
 
 ## Connecting ganach cli to networks
 ```bash

@@ -1,8 +1,9 @@
-package main
+package harmony
 
 import (
 	"fmt"
 	"math/big"
+	"percybolmer/rpc-shard-testing/rpctester/methods"
 	"testing"
 )
 
@@ -19,7 +20,7 @@ func test_getCirculatingSupply(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getCirculatingSupply,
+				Method:  methods.METHOD_staking_getCirculatingSupply,
 				Params:  []interface{}{},
 			},
 		},
@@ -60,7 +61,7 @@ func test_getTotalSupply(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getTotalSupply,
+				Method:  methods.METHOD_staking_getTotalSupply,
 				Params:  []interface{}{},
 			},
 		},
@@ -101,7 +102,7 @@ func test_getStakingNetworkInfo(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getStakingNetworkInfo,
+				Method:  methods.METHOD_staking_getStakingNetworkInfo,
 				Params:  []interface{}{},
 			},
 		},
@@ -142,7 +143,7 @@ func test_getAllValidatorInformation(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getAllValidatorInformation,
+				Method:  methods.METHOD_staking_getAllValidatorInformation,
 				Params:  []interface{}{},
 			},
 		},
@@ -151,7 +152,7 @@ func test_getAllValidatorInformation(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getAllValidatorInformation,
+				Method:  methods.METHOD_staking_getAllValidatorInformation,
 				Params: []interface{}{
 					1,
 				},
@@ -196,7 +197,7 @@ func (ts *testSuite) test_getValidatorInformation(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getValidatorInformation,
+				Method:  methods.METHOD_staking_getValidatorInformation,
 				Params: []interface{}{
 					Parse(ts.ValidatorsV2.Validators[0].Address),
 				},
@@ -241,7 +242,7 @@ func (ts *testSuite) test_getAllValidatorInformationByBlockNumber(t *testing.T) 
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getAllValidatorInformationByBlockNumber,
+				Method:  methods.METHOD_staking_getAllValidatorInformationByBlockNumber,
 				Params: []interface{}{
 					0,
 					ts.LastTransactionBlockNumber,
@@ -285,7 +286,7 @@ func test_getUtilityMetric(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getCurrentUtilityMetrics,
+				Method:  methods.METHOD_staking_getCurrentUtilityMetrics,
 				Params:  []interface{}{},
 			},
 		},
@@ -329,7 +330,7 @@ func (ts *testSuite) test_getDelegationsByValidator(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getDelegationsByValidator,
+				Method:  methods.METHOD_staking_getDelegationsByValidator,
 				Params: []interface{}{
 					ts.ValidatorsV2.Validators[0].Address,
 				},
@@ -374,9 +375,9 @@ func (ts *testSuite) test_getDelegationsByDelegatorAndValidator(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getDelegationsByDelegatorAndValidator,
+				Method:  methods.METHOD_staking_getDelegationsByDelegatorAndValidator,
 				Params: []interface{}{
-					address,
+					TestAddress,
 					ts.ValidatorsV2.Validators[0].Address,
 				},
 				//String - delegator bech32 address.
@@ -420,9 +421,9 @@ func (ts *testSuite) test_getDelegationsByDelegator(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getDelegationsByDelegator,
+				Method:  methods.METHOD_staking_getDelegationsByDelegator,
 				Params: []interface{}{
-					address,
+					TestAddress,
 				},
 				//String - delegator bech32 address.
 			},
@@ -466,7 +467,7 @@ func (ts *testSuite) test_getValidatorMetrics(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getValidatorMetrics,
+				Method:  methods.METHOD_staking_getValidatorMetrics,
 				Params: []interface{}{
 					ts.ValidatorsV2.Validators[0].Address,
 				},
@@ -509,7 +510,7 @@ func test_getMedianRawStakeSnapshot(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getMedianRawStakeSnapshot,
+				Method:  methods.METHOD_staking_getMedianRawStakeSnapshot,
 				Params:  []interface{}{},
 			},
 		},
@@ -550,7 +551,7 @@ func (ts *testSuite) test_getActiveValidatorAddresses(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getActiveValidatorAddresses,
+				Method:  methods.METHOD_staking_getActiveValidatorAddresses,
 				Params:  []interface{}{},
 			},
 		},
@@ -591,7 +592,7 @@ func test_V1_getAllValidatorAddresses(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V1_getAllValidatorAddresses,
+				Method:  methods.METHOD_staking_V1_getAllValidatorAddresses,
 				Params:  []interface{}{},
 			},
 		},
@@ -632,7 +633,7 @@ func test_V2_getAllValidatorAddresses(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V2_getAllValidatorAddresses,
+				Method:  methods.METHOD_staking_V2_getAllValidatorAddresses,
 				Params:  []interface{}{},
 			},
 		},
@@ -673,7 +674,7 @@ func test_V1_getCurrentStakingErrorSink(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V1_getCurrentStakingErrorSink,
+				Method:  methods.METHOD_staking_V1_getCurrentStakingErrorSink,
 				Params:  []interface{}{},
 			},
 		},
@@ -714,7 +715,7 @@ func test_V2_getCurrentStakingErrorSink(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V2_getCurrentStakingErrorSink,
+				Method:  methods.METHOD_staking_V2_getCurrentStakingErrorSink,
 				Params:  []interface{}{},
 			},
 		},
@@ -755,7 +756,7 @@ func (ts *testSuite) test_V1_getValidators(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V1_getValidators,
+				Method:  methods.METHOD_staking_V1_getValidators,
 				Params: []interface{}{
 					ts.NetworkHeader.Epoch,
 				},
@@ -799,7 +800,7 @@ func (ts *testSuite) test_V2_getValidators(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V2_getValidators,
+				Method:  methods.METHOD_staking_V2_getValidators,
 				Params: []interface{}{
 					ts.NetworkHeader.Epoch,
 				},
@@ -845,7 +846,7 @@ func test_getSignedBlocks(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_getSignedBlocks,
+				Method:  methods.METHOD_staking_getSignedBlocks,
 				Params: []interface{}{
 					ts.ValidatorsV2.Validators[0].Address,
 				},
@@ -889,7 +890,7 @@ func (ts *testSuite) test_V1_isBlockSigner(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V1_isBlockSigner,
+				Method:  methods.METHOD_staking_V1_isBlockSigner,
 				Params: []interface{}{
 					"0x0",
 					ts.ValidatorsV1.Validators[0].Address,
@@ -934,7 +935,7 @@ func (ts *testSuite) test_V2_isBlockSigner(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V2_isBlockSigner,
+				Method:  methods.METHOD_staking_V2_isBlockSigner,
 				Params: []interface{}{
 					ts.NetworkHeader.BlockNumber,
 					ts.ValidatorsV1.Validators[0].Address,
@@ -979,7 +980,7 @@ func (ts *testSuite) test_V1_getBlockSigners(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V1_getBlockSigners,
+				Method:  methods.METHOD_staking_V1_getBlockSigners,
 				Params: []interface{}{
 					"0x1",
 				},
@@ -1023,7 +1024,7 @@ func (ts *testSuite) test_V2_getBlockSigners(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V2_getBlockSigners,
+				Method:  methods.METHOD_staking_V2_getBlockSigners,
 				Params: []interface{}{
 					ts.NetworkHeader.BlockNumber,
 				},
@@ -1065,7 +1066,7 @@ func (ts *testSuite) test_V2_getAllElectedValidators(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V2_getElectedValidatorAddresses,
+				Method:  methods.METHOD_staking_V2_getElectedValidatorAddresses,
 				Params:  []interface{}{},
 			},
 		},
@@ -1107,7 +1108,7 @@ func (ts *testSuite) test_V1_getAllElectedValidators(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_staking_V1_getElectedValidatorAddresses,
+				Method:  methods.METHOD_staking_V1_getElectedValidatorAddresses,
 				Params:  []interface{}{},
 			},
 		},

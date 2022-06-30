@@ -1,8 +1,9 @@
-package main
+package harmony
 
 import (
 	"encoding/json"
 	"fmt"
+	"percybolmer/rpc-shard-testing/rpctester/methods"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -30,8 +31,8 @@ func test_EstimateGas(t *testing.T) {
 				data = append(data, methodID...)
 
 				rpcCall := RpcCallArgs{
-					From: common.HexToAddress(address).String(),
-					To:   smartContractAddress.String(),
+					From: common.HexToAddress(TestAddress).String(),
+					To:   SmartContractAddress.String(),
 					Data: data.String(),
 				}
 				return rpcCall
@@ -39,7 +40,7 @@ func test_EstimateGas(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_contract_estimateGas,
+				Method:  methods.METHOD_contract_estimateGas,
 				Params:  []interface{}{},
 			},
 		},
@@ -136,9 +137,9 @@ func test_getStorageAt(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_contract_getStorageAt,
+				Method:  methods.METHOD_contract_getStorageAt,
 				Params: []interface{}{
-					smartContractAddress,
+					SmartContractAddress,
 					"0x0", // Should be totalSupply
 					"latest",
 				},
@@ -241,8 +242,8 @@ func test_call(t *testing.T) {
 				data = append(data, methodID...)
 
 				rpcCall := RpcCallArgs{
-					From: common.HexToAddress(address).String(),
-					To:   smartContractAddress.String(),
+					From: common.HexToAddress(TestAddress).String(),
+					To:   SmartContractAddress.String(),
 					Data: data.String(),
 				}
 				return rpcCall
@@ -250,7 +251,7 @@ func test_call(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_contract_call,
+				Method:  methods.METHOD_contract_call,
 				Params:  []interface{}{},
 			},
 		},
@@ -322,7 +323,7 @@ func test_call(t *testing.T) {
 				}
 				responseAddr := common.HexToAddress(s).String()
 				// validate addr is correct
-				if responseAddr != address {
+				if responseAddr != TestAddress {
 					testMetrics = append(testMetrics, TestMetric{
 						Method:   tc.br.Method,
 						Test:     tc.name,
@@ -362,9 +363,9 @@ func test_getCode(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_contract_getCode,
+				Method:  methods.METHOD_contract_getCode,
 				Params: []interface{}{
-					smartContractAddress,
+					SmartContractAddress,
 					"latest",
 				},
 			},

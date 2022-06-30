@@ -1,8 +1,9 @@
-package main
+package harmony
 
 import (
 	"encoding/json"
 	"fmt"
+	"percybolmer/rpc-shard-testing/rpctester/methods"
 	"testing"
 )
 
@@ -19,7 +20,7 @@ func test_getLogs(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_getLogs,
+				Method:  methods.METHOD_filter_getLogs,
 				Params: []interface{}{
 					Filter{
 						Address: "0xcF664087a5bB0237a0BAd6742852ec6c8d69A27a",
@@ -112,7 +113,7 @@ func test_getFilterChanges(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_getFilterChanges,
+				Method:  methods.METHOD_filter_getFilterChanges,
 				Params: []interface{}{
 					createdFilterID,
 				},
@@ -124,7 +125,7 @@ func test_getFilterChanges(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_getFilterChanges,
+				Method:  methods.METHOD_filter_getFilterChanges,
 				Params: []interface{}{
 					"0x01",
 				},
@@ -213,7 +214,7 @@ func test_NewBlockFilter(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_newBlockFilter,
+				Method:  methods.METHOD_filter_newBlockFilter,
 				Params:  []interface{}{},
 			},
 		},
@@ -305,7 +306,7 @@ func test_NewPendingTransactionFilter(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_newPendingtransactionFilter,
+				Method:  methods.METHOD_filter_newPendingtransactionFilter,
 				Params:  []interface{}{},
 			},
 		},
@@ -398,13 +399,13 @@ func test_newFilter(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_newFilter,
+				Method:  methods.METHOD_filter_newFilter,
 				Params: []interface{}{
 					Filter{
 
 						FromBlock: "0x1",
 						ToBlock:   "0x2",
-						Address:   address,
+						Address:   TestAddress,
 						Topics:    []string{"0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b"},
 					},
 				},
@@ -415,13 +416,13 @@ func test_newFilter(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_newFilter,
+				Method:  methods.METHOD_filter_newFilter,
 				Params: []interface{}{
 					Filter{
 
 						FromBlock: "0x1",
 						ToBlock:   "0x2",
-						Address:   address,
+						Address:   TestAddress,
 						Topics:    []string{"notatopic"},
 					},
 				},
@@ -518,7 +519,7 @@ func test_getFilterLogs(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_getFilterLogs,
+				Method:  methods.METHOD_filter_getFilterLogs,
 				Params: []interface{}{
 					createdFilterID,
 				},
@@ -529,7 +530,7 @@ func test_getFilterLogs(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_getFilterLogs,
+				Method:  methods.METHOD_filter_getFilterLogs,
 				Params:  []interface{}{},
 			},
 		}, {
@@ -538,7 +539,7 @@ func test_getFilterLogs(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_filter_getFilterLogs,
+				Method:  methods.METHOD_filter_getFilterLogs,
 				Params: []interface{}{
 					"0x16",
 				},
@@ -631,7 +632,7 @@ func test_address(t *testing.T) {
 	testCases := []testcase{
 		{
 			name:    fmt.Sprintf("%s_addr", t.Name()),
-			id:      address,
+			id:      TestAddress,
 			offset:  0,
 			page:    2,
 			tx_view: "ALL",
@@ -644,7 +645,7 @@ func test_address(t *testing.T) {
 			response, err := Address(tc.id, tc.offset, tc.page, tc.tx_view)
 			if err != nil {
 				testMetrics = append(testMetrics, TestMetric{
-					Method: METHOD_address,
+					Method: methods.METHOD_address,
 					Test:   tc.name,
 					Pass:   false,
 					Error:  err.Error(),
@@ -656,7 +657,7 @@ func test_address(t *testing.T) {
 			// This step validates that the returned response is the correct data type
 
 			testMetrics = append(testMetrics, TestMetric{
-				Method:   METHOD_address,
+				Method:   methods.METHOD_address,
 				Test:     tc.name,
 				Duration: response.Duration,
 				Pass:     true,

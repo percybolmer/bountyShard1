@@ -1,12 +1,56 @@
-package main
+package harmony
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/big"
+	"percybolmer/rpc-shard-testing/rpctester/methods"
 	"testing"
 )
 
+func (ts *testSuite) test_getSuperCommitees(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+		expectedReturn    bool
+	}
+
+	testCases := []testcase{
+		{
+			name:           fmt.Sprintf("%s_get_super_commitees", t.Name()),
+			expectedReturn: false,
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  methods.METHOD_protocol_V2_getSuperCommitees,
+				Params:  []interface{}{},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var result json.RawMessage
+
+			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
 func test_isLastBlock(t *testing.T) {
 	type testcase struct {
 		name              string
@@ -33,7 +77,7 @@ func test_isLastBlock(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_isLastBlock,
+				Method:  methods.METHOD_protocol_isLastBlock,
 				Params: []interface{}{
 					10,
 				},
@@ -44,7 +88,7 @@ func test_isLastBlock(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_isLastBlock,
+				Method:  methods.METHOD_protocol_isLastBlock,
 				Params: []interface{}{
 					lastBlock,
 				},
@@ -89,7 +133,7 @@ func test_epochLastBlock(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_epochLastBlock,
+				Method:  methods.METHOD_protocol_epochLastBlock,
 				Params: []interface{}{
 					10,
 				},
@@ -134,7 +178,7 @@ func (ts *testSuite) test_latestHeader(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_lastestHeader,
+				Method:  methods.METHOD_protocol_lastestHeader,
 				Params:  []interface{}{},
 			},
 		},
@@ -178,7 +222,7 @@ func test_getShardingStructure(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_getShardingStructure,
+				Method:  methods.METHOD_protocol_getShardingStructure,
 				Params:  []interface{}{},
 			},
 		},
@@ -219,7 +263,7 @@ func test_V1_blockNumber(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_V1_blockNumber,
+				Method:  methods.METHOD_protocol_V1_blockNumber,
 				Params:  []interface{}{},
 			},
 		},
@@ -259,7 +303,7 @@ func test_V2_blockNumber(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_V2_blockNumber,
+				Method:  methods.METHOD_protocol_V2_blockNumber,
 				Params:  []interface{}{},
 			},
 		},
@@ -299,7 +343,7 @@ func test_syncing(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_syncing,
+				Method:  methods.METHOD_protocol_syncing,
 				Params:  []interface{}{},
 			},
 		},
@@ -340,7 +384,7 @@ func test_V1_gasPrice(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_V1_gasPrice,
+				Method:  methods.METHOD_protocol_V1_gasPrice,
 				Params:  []interface{}{},
 			},
 		},
@@ -380,7 +424,7 @@ func test_V2_gasPrice(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_V2_gasPrice,
+				Method:  methods.METHOD_protocol_V2_gasPrice,
 				Params:  []interface{}{},
 			},
 		},
@@ -421,7 +465,7 @@ func test_peerCount(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_peerCount,
+				Method:  methods.METHOD_protocol_peerCount,
 				Params:  []interface{}{},
 			},
 		},
@@ -462,7 +506,7 @@ func test_V1_getEpoch(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_V1_getEpoch,
+				Method:  methods.METHOD_protocol_V1_getEpoch,
 				Params:  []interface{}{},
 			},
 		},
@@ -502,7 +546,7 @@ func test_V2_getEpoch(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_V2_getEpoch,
+				Method:  methods.METHOD_protocol_V2_getEpoch,
 				Params:  []interface{}{},
 			},
 		},
@@ -543,7 +587,7 @@ func test_getLeader(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_protocol_getLeader,
+				Method:  methods.METHOD_protocol_getLeader,
 				Params:  []interface{}{},
 			},
 		},

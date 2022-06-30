@@ -1,7 +1,8 @@
-package main
+package harmony
 
 import (
 	"fmt"
+	"percybolmer/rpc-shard-testing/rpctester/methods"
 	"testing"
 )
 
@@ -18,7 +19,7 @@ func (ts *testSuite) test_traceBlock(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_trace_block,
+				Method:  methods.METHOD_trace_block,
 				Params: []interface{}{
 					ts.LastTransactionBlockNumber,
 				},
@@ -61,7 +62,7 @@ func (ts *testSuite) test_traceTransaction(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_trace_transaction,
+				Method:  methods.METHOD_trace_transaction,
 				Params: []interface{}{
 					ts.LastTransactionHash,
 				},

@@ -1,9 +1,10 @@
-package main
+package harmony
 
 import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"percybolmer/rpc-shard-testing/rpctester/methods"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -42,7 +43,7 @@ func (ts *testSuite) test_sendRawTransaction(t *testing.T) {
 			br: BaseRequest{
 				ID:      "1",
 				JsonRPC: "2.0",
-				Method:  METHOD_transaction_sendRawTransaction,
+				Method:  methods.METHOD_transaction_sendRawTransaction,
 				Params:  []interface{}{},
 			},
 		},
@@ -51,8 +52,8 @@ func (ts *testSuite) test_sendRawTransaction(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 
-			toAddr := common.HexToAddress(address)
-			fromAddr := common.HexToAddress(address)
+			toAddr := common.HexToAddress(TestAddress)
+			fromAddr := common.HexToAddress(TestAddress)
 
 			// Transfer 0.001 ONE
 			rlp, err := CreateRLPString(toAddr, fromAddr, *big.NewInt(0).Div(ONE, big.NewInt(1000)), nil)
