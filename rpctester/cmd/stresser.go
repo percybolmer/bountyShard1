@@ -54,6 +54,7 @@ type MethodResult struct {
 	Average   string // in nano
 	Responses int64
 	Failures  int64
+	Data      []byte `json:"-"`
 }
 
 // init makes sure that we add the needed flags for this particular cobra command
@@ -146,7 +147,7 @@ func benchmarkMethod(method string, requestGen benchmarker.GenerateRequestFunc) 
 
 	go bencher.Dispatcher(reqChan, requestGen)
 	go bencher.WorkerPool(reqChan, respChan)
-	responesRecieved, totalDuration, failures := bencher.Consumer(respChan)
+	responesRecieved, totalDuration, failures, data := bencher.Consumer(respChan)
 
 	average := totalDuration / responesRecieved
 	averageString := time.Duration(average)
@@ -154,5 +155,6 @@ func benchmarkMethod(method string, requestGen benchmarker.GenerateRequestFunc) 
 		Average:   averageString.String(),
 		Failures:  failures,
 		Responses: responesRecieved,
+		Data:      data,
 	}
 }

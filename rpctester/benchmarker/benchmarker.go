@@ -2,6 +2,7 @@ package benchmarker
 
 import (
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -31,6 +32,8 @@ type Response struct {
 	Message string
 	Err     error
 	Metric  BenchMetric
+	// Return can be used by methods that needs to return data
+	Return []byte
 }
 
 // Dispatcher is used to dispatch the amount of requests
@@ -62,8 +65,14 @@ func (bm *Benchmarker) Worker(t *http.Transport, reqChan chan *http.Request, res
 		if resp.StatusCode != http.StatusOK {
 			err = errors.New(resp.Status)
 		}
+
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			err = errors.New(err.Error())
+		}
 		response := Response{
-			Err: err,
+			Err:    err,
+			Return: data,
 			Metric: BenchMetric{
 				Duration: duration.Nanoseconds(),
 			},
@@ -81,7 +90,8 @@ func (bm *Benchmarker) Worker(t *http.Transport, reqChan chan *http.Request, res
 // requestsProcessed - amount of responses ingested
 // totalDuration -- total duartion in nanoseconds
 // failures -- amount of requests that failed
-func (bm *Benchmarker) Consumer(respChan chan Response) (requestsProcessed int64, totalDuration int64, failures int64) {
+// data -- returned data from a successfull request
+func (bm *Benchmarker) Consumer(respChan chan Response) (requestsProcessed int64, totalDuration int64, failures int64, data []byte) {
 
 	for requestsProcessed < int64(bm.reqs) {
 		select {
@@ -89,6 +99,8 @@ func (bm *Benchmarker) Consumer(respChan chan Response) (requestsProcessed int64
 			if ok {
 				if r.Err != nil {
 					failures++
+				} else {
+					data = r.Return
 				}
 				totalDuration = totalDuration + r.Metric.Duration
 				requestsProcessed++
