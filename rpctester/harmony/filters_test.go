@@ -405,7 +405,7 @@ func test_newFilter(t *testing.T) {
 
 						FromBlock: "0x1",
 						ToBlock:   "0x2",
-						Address:   address,
+						Address:   TestAddress,
 						Topics:    []string{"0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b"},
 					},
 				},
@@ -422,7 +422,7 @@ func test_newFilter(t *testing.T) {
 
 						FromBlock: "0x1",
 						ToBlock:   "0x2",
-						Address:   address,
+						Address:   TestAddress,
 						Topics:    []string{"notatopic"},
 					},
 				},
@@ -632,7 +632,7 @@ func test_address(t *testing.T) {
 	testCases := []testcase{
 		{
 			name:    fmt.Sprintf("%s_addr", t.Name()),
-			id:      address,
+			id:      TestAddress,
 			offset:  0,
 			page:    2,
 			tx_view: "ALL",

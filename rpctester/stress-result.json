@@ -1,0 +1,71 @@
+{
+    "addressUsed": "0xfc61332CC9CdFDfCba598131595C96F8C33CE209",
+    "network": "https://api.s0.ps.hmny.io/",
+    "Methods": {
+        "hmy_blockNumber": {
+            "Average": "401.92774ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmy_epochLastBlock": {
+            "Average": "343.486017ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmy_gasPrice": {
+            "Average": "408.082446ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmy_getEpoch": {
+            "Average": "386.838838ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmy_getLeader": {
+            "Average": "438.010942ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmy_getShardingStructure": {
+            "Average": "419.171901ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmy_isLastBlock": {
+            "Average": "421.145503ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmy_latestHeader": {
+            "Average": "442.038507ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmy_syncing": {
+            "Average": "403.062208ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmyv2_blockNumber": {
+            "Average": "427.332262ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmyv2_gasPrice": {
+            "Average": "384.348293ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "hmyv2_getEpoch": {
+            "Average": "413.830338ms",
+            "Responses": 1000,
+            "Failures": 0
+        },
+        "net_peerCount": {
+            "Average": "422.266279ms",
+            "Responses": 1000,
+            "Failures": 0
+        }
+    }
+}

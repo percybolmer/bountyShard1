@@ -31,7 +31,7 @@ func test_EstimateGas(t *testing.T) {
 				data = append(data, methodID...)
 
 				rpcCall := RpcCallArgs{
-					From: common.HexToAddress(address).String(),
+					From: common.HexToAddress(TestAddress).String(),
 					To:   smartContractAddress.String(),
 					Data: data.String(),
 				}
@@ -242,7 +242,7 @@ func test_call(t *testing.T) {
 				data = append(data, methodID...)
 
 				rpcCall := RpcCallArgs{
-					From: common.HexToAddress(address).String(),
+					From: common.HexToAddress(TestAddress).String(),
 					To:   smartContractAddress.String(),
 					Data: data.String(),
 				}
@@ -323,7 +323,7 @@ func test_call(t *testing.T) {
 				}
 				responseAddr := common.HexToAddress(s).String()
 				// validate addr is correct
-				if responseAddr != address {
+				if responseAddr != TestAddress {
 					testMetrics = append(testMetrics, TestMetric{
 						Method:   tc.br.Method,
 						Test:     tc.name,

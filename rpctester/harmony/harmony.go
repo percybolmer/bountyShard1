@@ -38,7 +38,7 @@ var (
 	auth          *bind.TransactOpts
 	deployedToken *devtoken.Devtoken
 
-	address                     string
+	TestAddress                 string
 	URL                         string
 	smartContractDeploymentHash string
 	smartContractAddress        common.Address
@@ -81,7 +81,7 @@ func init() {
 		}
 	}
 
-	address = os.Getenv("ADDRESS")
+	TestAddress = os.Getenv("ADDRESS")
 	URL = os.Getenv("NET_URL")
 	smartContractAddr := os.Getenv("SMART_CONTRACT_ADDRESS")
 	smartContractDeploymentHash = os.Getenv("SMART_CONTRACT_DEPLOY_HASH")
@@ -152,7 +152,7 @@ type RPCError struct {
 
 func GenerateReport() {
 	results := TestResults{
-		AddressUsed: address,
+		AddressUsed: TestAddress,
 		Network:     URL,
 		Metrics:     testMetrics,
 	}
@@ -293,7 +293,7 @@ func CreateRLPString(to common.Address, from common.Address, amount big.Int, dat
 // delgator and validator is sent as ONE accounts format ie bech32
 // addr
 func CreateStakingRLPString(delegator string, validator string, amount *big.Int, data []byte) (string, error) {
-	nonce, err := ethClient.PendingNonceAt(context.Background(), common.HexToAddress(address))
+	nonce, err := ethClient.PendingNonceAt(context.Background(), common.HexToAddress(TestAddress))
 	if err != nil {
 		return "", err
 	}

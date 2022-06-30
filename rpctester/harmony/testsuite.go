@@ -52,8 +52,8 @@ func (ts *testSuite) test_sendRawTransaction(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 
-			toAddr := common.HexToAddress(address)
-			fromAddr := common.HexToAddress(address)
+			toAddr := common.HexToAddress(TestAddress)
+			fromAddr := common.HexToAddress(TestAddress)
 
 			// Transfer 0.001 ONE
 			rlp, err := CreateRLPString(toAddr, fromAddr, *big.NewInt(0).Div(ONE, big.NewInt(1000)), nil)

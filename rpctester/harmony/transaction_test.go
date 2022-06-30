@@ -1361,7 +1361,7 @@ func (ts *testSuite) test_sendRawStakingTransaction(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Build a Staking Transaction
 
-			payload, err := CreateStakingRLPString(address, ts.ElectedValidators[0], big.NewInt(0).Mul(ONE, big.NewInt(101)), nil)
+			payload, err := CreateStakingRLPString(TestAddress, ts.ElectedValidators[0], big.NewInt(0).Mul(ONE, big.NewInt(101)), nil)
 			if err != nil {
 				testMetrics = append(testMetrics, TestMetric{
 					Method: tc.br.Method,
@@ -1418,7 +1418,7 @@ func (ts *testSuite) test_V1_getTransactionHistory(t *testing.T) {
 				Method:  methods.METHOD_transaction_V1_getTransactionHistory,
 				Params: []interface{}{
 					TransactionArguments{
-						Address:   address,
+						Address:   TestAddress,
 						TxType:    "ALL",
 						FullTx:    true,
 						PageSize:  100,
@@ -1535,7 +1535,7 @@ func (ts *testSuite) test_V2_getTransactionHistory(t *testing.T) {
 				Method:  methods.METHOD_transaction_V2_getTransactionHistory,
 				Params: []interface{}{
 					TransactionArguments{
-						Address:   address,
+						Address:   TestAddress,
 						TxType:    "ALL",
 						FullTx:    true,
 						PageSize:  100,
@@ -1552,7 +1552,7 @@ func (ts *testSuite) test_V2_getTransactionHistory(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_transaction_V2_getTransactionHistory,
 				Params: []interface{}{
-					address,
+					TestAddress,
 				},
 			},
 		},

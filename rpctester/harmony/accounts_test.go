@@ -23,7 +23,7 @@ func test_V2_hmy_getBalance(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V2_getBalance,
 				Params: []interface{}{
-					address,
+					TestAddress,
 				},
 			},
 		}, {
@@ -34,7 +34,7 @@ func test_V2_hmy_getBalance(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V1_getBalance,
 				Params: []interface{}{
-					address,
+					TestAddress,
 				},
 			},
 		},
@@ -125,7 +125,7 @@ func test_V1_hmy_getBalance(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V1_getBalance,
 				Params: []interface{}{
-					address,
+					TestAddress,
 					"latest",
 				},
 			},
@@ -137,7 +137,7 @@ func test_V1_hmy_getBalance(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V1_getBalance,
 				Params: []interface{}{
-					address,
+					TestAddress,
 				},
 			},
 		},
@@ -229,7 +229,7 @@ func test_V1_hmy_getTransactionCount(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V1_getTransactionCount,
 				Params: []interface{}{
-					address,
+					TestAddress,
 					"latest",
 				},
 			},
@@ -241,7 +241,7 @@ func test_V1_hmy_getTransactionCount(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V1_getTransactionCount,
 				Params: []interface{}{
-					address,
+					TestAddress,
 				},
 			},
 		},
@@ -333,7 +333,7 @@ func test_V2_hmy_getTransactionCount(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V2_getTransactionCount,
 				Params: []interface{}{
-					address,
+					TestAddress,
 					1,
 				},
 			},
@@ -345,7 +345,7 @@ func test_V2_hmy_getTransactionCount(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V2_getTransactionCount,
 				Params: []interface{}{
-					address,
+					TestAddress,
 				},
 			},
 		},
@@ -438,7 +438,7 @@ func test_V2_getBalanceByBlockNumber(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V2_getBalanceByBlockNumber,
 				Params: []interface{}{
-					address,
+					TestAddress,
 					"1",
 				},
 			},
@@ -450,7 +450,7 @@ func test_V2_getBalanceByBlockNumber(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V2_getBalanceByBlockNumber,
 				Params: []interface{}{
-					address,
+					TestAddress,
 				},
 			},
 		},
@@ -542,7 +542,7 @@ func test_V1_getBalanceByBlockNumber(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V1_getBalanceByBlockNumber,
 				Params: []interface{}{
-					address,
+					TestAddress,
 					"0x01",
 				},
 			},
@@ -554,7 +554,7 @@ func test_V1_getBalanceByBlockNumber(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_V1_getBalanceByBlockNumber,
 				Params: []interface{}{
-					address,
+					TestAddress,
 				},
 			},
 		},

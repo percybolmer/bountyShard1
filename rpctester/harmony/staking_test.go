@@ -377,7 +377,7 @@ func (ts *testSuite) test_getDelegationsByDelegatorAndValidator(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_staking_getDelegationsByDelegatorAndValidator,
 				Params: []interface{}{
-					address,
+					TestAddress,
 					ts.ValidatorsV2.Validators[0].Address,
 				},
 				//String - delegator bech32 address.
@@ -423,7 +423,7 @@ func (ts *testSuite) test_getDelegationsByDelegator(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_staking_getDelegationsByDelegator,
 				Params: []interface{}{
-					address,
+					TestAddress,
 				},
 				//String - delegator bech32 address.
 			},
