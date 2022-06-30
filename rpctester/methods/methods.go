@@ -93,6 +93,7 @@ const (
 	METHOD_protocol_V1_getEpoch          = "hmy_getEpoch"
 	METHOD_protocol_V2_getEpoch          = "hmyv2_getEpoch"
 	METHOD_protocol_getLeader            = "hmy_getLeader"
+	METHOD_protocol_V2_getSuperCommitees = "hmyv2_getSuperCommitees"
 
 	/**
 	Staking Related Methods

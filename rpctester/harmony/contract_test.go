@@ -32,7 +32,7 @@ func test_EstimateGas(t *testing.T) {
 
 				rpcCall := RpcCallArgs{
 					From: common.HexToAddress(TestAddress).String(),
-					To:   smartContractAddress.String(),
+					To:   SmartContractAddress.String(),
 					Data: data.String(),
 				}
 				return rpcCall
@@ -139,7 +139,7 @@ func test_getStorageAt(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_contract_getStorageAt,
 				Params: []interface{}{
-					smartContractAddress,
+					SmartContractAddress,
 					"0x0", // Should be totalSupply
 					"latest",
 				},
@@ -243,7 +243,7 @@ func test_call(t *testing.T) {
 
 				rpcCall := RpcCallArgs{
 					From: common.HexToAddress(TestAddress).String(),
-					To:   smartContractAddress.String(),
+					To:   SmartContractAddress.String(),
 					Data: data.String(),
 				}
 				return rpcCall
@@ -365,7 +365,7 @@ func test_getCode(t *testing.T) {
 				JsonRPC: "2.0",
 				Method:  methods.METHOD_contract_getCode,
 				Params: []interface{}{
-					smartContractAddress,
+					SmartContractAddress,
 					"latest",
 				},
 			},

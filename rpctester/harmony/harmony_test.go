@@ -120,6 +120,7 @@ func test_TraceMethods(t *testing.T) {
 }
 
 func test_ProtocolMethods(t *testing.T) {
+	// t.Run("getSuperCommitee_v2", ts.test_getSuperCommitees)
 	t.Run("isLastBlocK", test_isLastBlock)
 	t.Run("epochLastBlock", test_epochLastBlock)
 	t.Run("lastestHeader", ts.test_latestHeader)

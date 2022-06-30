@@ -2,12 +2,55 @@ package harmony
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"percybolmer/rpc-shard-testing/rpctester/methods"
 	"testing"
 )
 
+func (ts *testSuite) test_getSuperCommitees(t *testing.T) {
+	type testcase struct {
+		name              string
+		br                BaseRequest
+		expectedErrorCode int64
+		expectedReturn    bool
+	}
+
+	testCases := []testcase{
+		{
+			name:           fmt.Sprintf("%s_get_super_commitees", t.Name()),
+			expectedReturn: false,
+			br: BaseRequest{
+				ID:      "1",
+				JsonRPC: "2.0",
+				Method:  methods.METHOD_protocol_V2_getSuperCommitees,
+				Params:  []interface{}{},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var result json.RawMessage
+
+			resp, err := callAndValidateDataType(t, tc.name, tc.expectedErrorCode, tc.br, &result)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			testMetrics = append(testMetrics, TestMetric{
+				Method:   tc.br.Method,
+				Test:     tc.name,
+				Pass:     true,
+				Duration: resp.Duration,
+				Params:   tc.br.Params,
+			})
+
+		})
+	}
+}
 func test_isLastBlock(t *testing.T) {
 	type testcase struct {
 		name              string

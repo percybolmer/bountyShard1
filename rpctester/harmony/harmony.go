@@ -41,7 +41,7 @@ var (
 	TestAddress                 string
 	URL                         string
 	smartContractDeploymentHash string
-	smartContractAddress        common.Address
+	SmartContractAddress        common.Address
 	// Bigint representation of 1
 	ONE *big.Int
 )
@@ -88,8 +88,8 @@ func init() {
 	// Create eth client
 	ethClient, auth = crypto.NewClient()
 	// Load the Smart Contract
-	smartContractAddress = common.HexToAddress(smartContractAddr)
-	instance, err := devtoken.NewDevtoken(smartContractAddress, ethClient)
+	SmartContractAddress = common.HexToAddress(smartContractAddr)
+	instance, err := devtoken.NewDevtoken(SmartContractAddress, ethClient)
 	if err != nil {
 		log.Fatal(err)
 	}
